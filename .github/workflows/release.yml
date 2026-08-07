@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+  # Lets the three builds (and the macOS verification) be exercised by hand
+  # without publishing anything. The release job below is gated on a tag.
+  workflow_dispatch:
 
 jobs:
   # ── Linux x86_64 ──────────────────────────────────────────────────────────
@@ -27,18 +30,6 @@ jobs:
           repository: juce-framework/JUCE
           ref: 8.0.12
           path: JUCE
-
-      - name: Checkout FxmeJuceTools
-        uses: actions/checkout@v4
-        with:
-          repository: odoare/FxmeJuceTools
-          path: _fxme_tmp
-
-      - name: Install FxmeJuceTools module
-        shell: bash
-        run: |
-          mkdir -p JUCE/usermodules
-          mv _fxme_tmp/module/FxmeJuceTools JUCE/usermodules/FxmeJuceTools
 
       - name: Configure & Build
         run: |
@@ -76,18 +67,6 @@ jobs:
           ref: 8.0.12
           path: JUCE
 
-      - name: Checkout FxmeJuceTools
-        uses: actions/checkout@v4
-        with:
-          repository: odoare/FxmeJuceTools
-          path: _fxme_tmp
-
-      - name: Install FxmeJuceTools module
-        shell: bash
-        run: |
-          mkdir -p JUCE/usermodules
-          mv _fxme_tmp/module/FxmeJuceTools JUCE/usermodules/FxmeJuceTools
-
       - name: Configure & Build
         run: |
           cmake -B SimpleSampler/build -S SimpleSampler -G "Visual Studio 17 2022"
@@ -105,6 +84,8 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
+          # A workflow_dispatch run has no tag, so ref_name is a branch name.
+          [[ "$VERSION" =~ ^[0-9] ]] || VERSION="1.0.0"
           NSIS="/c/Program Files (x86)/NSIS/makensis.exe"
           PKG_DIR="${{ github.workspace }}/SimpleSampler/packaging/windows"
           BUILD_DIR="${{ github.workspace }}/SimpleSampler/build"
@@ -144,36 +125,78 @@ jobs:
           ref: 8.0.12
           path: JUCE
 
-      - name: Checkout FxmeJuceTools
-        uses: actions/checkout@v4
-        with:
-          repository: odoare/FxmeJuceTools
-          path: _fxme_tmp
-
-      - name: Install FxmeJuceTools module
-        shell: bash
-        run: |
-          mkdir -p JUCE/usermodules
-          mv _fxme_tmp/module/FxmeJuceTools JUCE/usermodules/FxmeJuceTools
-
       - name: Configure & Build
         run: |
-          cmake -B SimpleSampler/build -S SimpleSampler -DCMAKE_BUILD_TYPE=Release
+          # The architecture/deployment settings are passed here as well as in
+          # CMakeLists.txt: a command-line -D lands in the cache before any
+          # CMakeLists line runs, so it cannot be lost to file ordering.
+          cmake -B SimpleSampler/build -S SimpleSampler \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
           # Build the large BinaryData targets one at a time to avoid OOM.
           cmake --build SimpleSampler/build --config Release --target BlackWidowDrumsBinaryData --parallel 1
           cmake --build SimpleSampler/build --config Release --target CenturyDrumsBinaryData   --parallel 1
           # BinaryData is cached; build capped at 2 (7 GB RAM + universal binary overhead).
           cmake --build SimpleSampler/build --config Release --parallel 2
 
+      # This step must be able to fail. `lipo -info` printing "arm64" while the
+      # job goes green is exactly how an arm64-only release ships.
       - name: Verify universal binaries
         run: |
-          lipo -info "SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3/Contents/MacOS/Black Widow Drums"
-          lipo -info "SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release/VST3/CenturyDrums.vst3/Contents/MacOS/CenturyDrums"
+          set -uo pipefail
+          BW="SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release"
+          CT="SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release"
+          status=0
+          for bundle in \
+            "$BW/VST3/Black Widow Drums.vst3/Contents/MacOS/Black Widow Drums" \
+            "$BW/AU/Black Widow Drums.component/Contents/MacOS/Black Widow Drums" \
+            "$BW/Standalone/Black Widow Drums.app/Contents/MacOS/Black Widow Drums" \
+            "$CT/VST3/CenturyDrums.vst3/Contents/MacOS/CenturyDrums" \
+            "$CT/AU/CenturyDrums.component/Contents/MacOS/CenturyDrums" \
+            "$CT/Standalone/CenturyDrums.app/Contents/MacOS/CenturyDrums"
+          do
+            if [[ ! -f "$bundle" ]]; then
+              echo "::error::missing binary: $bundle"; status=1; continue
+            fi
+            info=$(lipo -info "$bundle")
+            echo "$info"
+            for arch in x86_64 arm64; do
+              grep -qw "$arch" <<< "$info" \
+                || { echo "::error::$bundle has no $arch slice"; status=1; }
+            done
+            vtool -show-build "$bundle" | grep -E 'minos|platform' || true
+          done
+          exit $status
+
+      # Ad-hoc signature: free, no Apple account. It only makes the bundle
+      # internally consistent (arm64 code needs *some* signature to run, and
+      # packaging steps can invalidate the linker's). It is NOT notarisation
+      # and does nothing for Gatekeeper — see the README on quarantine.
+      - name: Ad-hoc codesign
+        run: |
+          set -euo pipefail
+          BW="SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release"
+          CT="SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release"
+          for b in \
+            "$BW/VST3/Black Widow Drums.vst3" \
+            "$BW/AU/Black Widow Drums.component" \
+            "$BW/Standalone/Black Widow Drums.app" \
+            "$CT/VST3/CenturyDrums.vst3" \
+            "$CT/AU/CenturyDrums.component" \
+            "$CT/Standalone/CenturyDrums.app"
+          do
+            codesign --force --deep --sign - --timestamp=none "$b"
+            codesign --verify --verbose "$b"
+          done
 
       - name: Build pkg installer
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
+          # A workflow_dispatch run has no tag, so ref_name is a branch name.
+          # Keep this fallback in step with project(... VERSION ...) in CMakeLists.txt.
+          [[ "$VERSION" =~ ^[0-9] ]] || VERSION="1.0.0"
           mkdir -p pkg_root/Library/Audio/Plug-Ins/VST3
           mkdir -p pkg_root/Library/Audio/Plug-Ins/Components
           cp -r "SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" \
@@ -219,6 +242,8 @@ jobs:
   # ── Publish GitHub Release ────────────────────────────────────────────────
   release:
     needs: [build-linux-x86_64, build-windows, build-macos]
+    # Only publish for a real tag; workflow_dispatch runs stop after the builds.
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: write

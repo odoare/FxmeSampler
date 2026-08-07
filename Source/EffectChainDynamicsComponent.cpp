@@ -12,7 +12,9 @@ EffectChainDynamicsComponent::EffectChainDynamicsComponent (EffectChainDynamics&
     : chain (c),
       eqComp (c.getEQ(), apvts, prefix),
       compComp (c.getComp(), apvts, prefix),
-      tubeComp (c.getTube(), apvts, prefix),
+      // The chain gives the tube a wide, short slot (a third of the right-hand
+      // column), so lay its knobs out in one row instead of the default 2x2.
+      tubeComp (c.getTube(), apvts, prefix, true, true),
       transComp (c.getTransient(), apvts, prefix)
 {
     addAndMakeVisible (orderBox);

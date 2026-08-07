@@ -1,5 +1,5 @@
 # Black Widow Drums plugin
-# JUCE and FxmeJuceTools are set up by the root CMakeLists.txt.
+# JUCE and FxmeTools are set up by the root CMakeLists.txt.
 # All paths below are relative to this file's directory (Kits/BlackWidow/).
 
 juce_add_plugin(BlackWidowDrums
@@ -54,6 +54,12 @@ juce_add_binary_data(BlackWidowDrumsBinaryData SOURCES
     ../../img/logo686.png
     ../../img/tube.png
     ../../img/tube_bw.png
+
+    # Tube artwork — taken straight from the FxmeFX submodule so it stays in
+    # step with TubeComponent, which looks these two up by name (tube2_png /
+    # tube2_bw_png) when the On button is toggled.
+    ../../FxmeFX/Source/Tube/img/tube2.png
+    ../../FxmeFX/Source/Tube/img/tube2_bw.png
 
     # Sounds
     "data/wav/3 CYMB CRASH18 0 49 49 49.wav"
@@ -132,12 +138,8 @@ target_sources(BlackWidowDrums PRIVATE
     ../../FxmeFX/Source/Transient/TransientComponent.cpp
     ../../FxmeFX/Source/Tube/Tube.cpp
     ../../FxmeFX/Source/Tube/TubeComponent.cpp
-    ../../FxmeFX/Source/VuMeter/VuMeter.cpp
-    ../../FxmeFX/Source/VuMeter/VuMeterComponent.cpp
-    # WDL convolution library (vendored inside FxmeFX submodule)
-    ../../FxmeFX/WDL/WDL/convoengine.cpp
-    ../../FxmeFX/WDL/WDL/fft.c
-    ../../FxmeFX/WDL/WDL/resample.cpp
+    # The WDL convolution engine (convoengine.cpp/fft.c/resample.cpp) is
+    # compiled in by fxmetools_attach() below, from FxmeTools' WDL submodule.
 )
 
 target_include_directories(BlackWidowDrums PRIVATE
@@ -164,7 +166,7 @@ target_compile_definitions(BlackWidowDrums
 target_link_libraries(BlackWidowDrums
     PRIVATE
         BlackWidowDrumsBinaryData
-        FxmeJuceTools
+        FxmeCommonBinaryData
         juce_audio_basics
         juce_audio_devices
         juce_audio_formats
@@ -183,3 +185,8 @@ target_link_libraries(BlackWidowDrums
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+# Links the FxmeTools module (fxme::VuMeter, fxme::SpectrumAnalyzer,
+# fxme::EmbeddedAudio, fxme::FxmeSlider, fxme::FxmeLookAndFeel…) and compiles
+# the WDL convolution engine reached through <convoengine.h>.
+fxmetools_attach(BlackWidowDrums)

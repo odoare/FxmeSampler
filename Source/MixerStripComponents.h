@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "MixerStrips.h"
+#include "TitleBar.h"
 #include "VuMeterComponent.h"
 #include "ConvolReverbComponent.h" // For irBox
 
@@ -42,7 +43,7 @@ public:
 protected:
     MixerStrip& strip;
     juce::Label nameLabel;
-    fxme::TitleBar nameBar;
+    TitleBar nameBar;
     fxme::FxmeSlider levelSlider;
     juce::ToggleButton muteButton, soloButton;
     juce::ImageComponent icon;

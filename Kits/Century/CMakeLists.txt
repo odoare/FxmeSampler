@@ -1,5 +1,5 @@
 # CenturyDrums plugin
-# JUCE and FxmeJuceTools are set up by the root CMakeLists.txt.
+# JUCE and FxmeTools are set up by the root CMakeLists.txt.
 # All paths below are relative to this file's directory (Kits/Century/).
 
 juce_add_plugin(CenturyDrums
@@ -51,6 +51,12 @@ juce_add_binary_data(CenturyDrumsBinaryData SOURCES
     ../../img/logo686.png
     ../../img/tube.png
     ../../img/tube_bw.png
+
+    # Tube artwork — taken straight from the FxmeFX submodule so it stays in
+    # step with TubeComponent, which looks these two up by name (tube2_png /
+    # tube2_bw_png) when the On button is toggled.
+    ../../FxmeFX/Source/Tube/img/tube2.png
+    ../../FxmeFX/Source/Tube/img/tube2_bw.png
 
     # Sounds — cymbals
     "Data/wav/CYMB CRASH 01 0 49 49 49.wav"
@@ -196,12 +202,8 @@ target_sources(CenturyDrums PRIVATE
     ../../FxmeFX/Source/Transient/TransientComponent.cpp
     ../../FxmeFX/Source/Tube/Tube.cpp
     ../../FxmeFX/Source/Tube/TubeComponent.cpp
-    ../../FxmeFX/Source/VuMeter/VuMeter.cpp
-    ../../FxmeFX/Source/VuMeter/VuMeterComponent.cpp
-    # WDL convolution library (vendored inside FxmeFX submodule)
-    ../../FxmeFX/WDL/WDL/convoengine.cpp
-    ../../FxmeFX/WDL/WDL/fft.c
-    ../../FxmeFX/WDL/WDL/resample.cpp
+    # The WDL convolution engine (convoengine.cpp/fft.c/resample.cpp) is
+    # compiled in by fxmetools_attach() below, from FxmeTools' WDL submodule.
 )
 
 target_include_directories(CenturyDrums PRIVATE
@@ -228,7 +230,7 @@ target_compile_definitions(CenturyDrums
 target_link_libraries(CenturyDrums
     PRIVATE
         CenturyDrumsBinaryData
-        FxmeJuceTools
+        FxmeCommonBinaryData
         juce_audio_basics
         juce_audio_devices
         juce_audio_formats
@@ -247,3 +249,8 @@ target_link_libraries(CenturyDrums
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+# Links the FxmeTools module (fxme::VuMeter, fxme::SpectrumAnalyzer,
+# fxme::EmbeddedAudio, fxme::FxmeSlider, fxme::FxmeLookAndFeel…) and compiles
+# the WDL convolution engine reached through <convoengine.h>.
+fxmetools_attach(CenturyDrums)

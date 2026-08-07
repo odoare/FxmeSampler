@@ -23,10 +23,20 @@ Download the latest release from the [Releases](../../releases) page and follow 
 
 ### macOS
 
-1. Download `SimpleSampler-macOS.pkg`.
-2. Double-click to run the installer — it copies the VST3 to `/Library/Audio/Plug-Ins/VST3/` and the AU to `/Library/Audio/Plug-Ins/Components/`.
-3. Because the plugin is not notarized, macOS will block it on first use. Go to **System Settings → Privacy & Security** and click **Allow Anyway**.
+The macOS builds are universal (Intel and Apple Silicon) and run on macOS 10.13 or later. They are **not signed or notarized**, so macOS quarantines anything downloaded through a browser. This is the usual reason a freshly installed plugin never shows up in a DAW, with no error message at all.
+
+1. Download `FxmeSampler-macOS.pkg`.
+2. Because the installer is unsigned, double-clicking it will be refused. Right-click the `.pkg` and choose **Open**, then confirm. The installer copies the VST3 to `/Library/Audio/Plug-Ins/VST3/` and the AU to `/Library/Audio/Plug-Ins/Components/`.
+3. Remove the quarantine flag from the installed bundles (this is the step that makes them visible to the DAW):
+   ```bash
+   xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/VST3/Black Widow Drums.vst3"
+   xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/VST3/CenturyDrums.vst3"
+   xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/Components/Black Widow Drums.component"
+   xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/Components/CenturyDrums.component"
+   ```
 4. Restart your DAW. Logic Pro users may need to trigger a rescan in **Logic Pro → Plug-in Manager**.
+
+If you prefer not to use the installer, `FxmeSampler-VST3-macOS-universal.zip` and `FxmeSampler-AU-macOS-universal.zip` contain the same bundles; copy them to the folders above (or to `~/Library/Audio/Plug-Ins/…` for a per-user install) and run the same `xattr` command on them.
 
 ### Windows
 
@@ -46,14 +56,15 @@ Download the latest release from the [Releases](../../releases) page and follow 
 
 ## Building
 
-This project uses CMake and requires JUCE 8 as a sibling directory (`../JUCE`) and the [FxmeJuceTools](https://github.com/odoare/FxmeJuceTools) module installed at `../JUCE/usermodules/FxmeJuceTools`.
+This project uses CMake and requires JUCE 8 as a sibling directory (`../JUCE`). Everything else comes from the [FxmeFX](https://github.com/odoare/FxmeFX) submodule, which itself carries [FxmeTools](https://github.com/odoare/FxmeTools) (shared controls, look-and-feel, DSP) and WDL (convolution engine) as nested submodules, so the checkout has to be recursive:
 
 ```bash
+git submodule update --init --recursive
 cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release --parallel
+cmake --build build --config Release --parallel 2
 ```
 
-Artefacts are written to `build/SimpleSampler_artefacts/Release/`.
+Artefacts are written per kit, to `build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/` and `build/Kits/Century/CenturyDrums_artefacts/Release/`. A single kit can be built with `-DKIT=BlackWidow` or `-DKIT=Century`.
 
 > **Note:** The embedded demo kit files (wav samples and mapping.xml) currently live under `MyKits/FakeAmbixKit/Data/`, which is gitignored. Move them to a tracked location and update the paths in `CMakeLists.txt` before running CI builds.
 
