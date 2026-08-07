@@ -229,26 +229,23 @@ juce::AudioProcessorEditor* FxmeSamplerAudioProcessor::createEditor()
 }
 
 //==============================================================================
+// Version of the saved-state format, written as an attribute on the state root
+// so a future format change has something to branch on in setStateInformation.
+// State written before versioning existed carries no attribute and reads as 0.
+static constexpr int currentStateVersion = 1;
+
 void FxmeSamplerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
-    
+
     if (xml != nullptr)
     {
+        xml->setAttribute ("version", currentStateVersion);
+
         destData.setSize (0);
         juce::MemoryOutputStream stream (destData, false);
         xml->writeTo (stream);
-
-        auto xmlFile = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("samplerdata.xml");
-
-        if (!xmlFile.getParentDirectory().exists())
-            xmlFile.getParentDirectory().createDirectory();
-
-        if (xml->writeTo (xmlFile))
-            std::cout << "Saved to:" << xmlFile.getFullPathName() << std::endl;
-        else
-            std::cout << "Failed to save to:" << xmlFile.getFullPathName() << std::endl;
     }
 }
 
@@ -256,8 +253,16 @@ void FxmeSamplerAudioProcessor::setStateInformation (const void* data, int sizeI
 {
     std::unique_ptr<juce::XmlElement> xmlState (juce::XmlDocument::parse (juce::String::createStringFromData (data, sizeInBytes)));
 
-    if (xmlState != nullptr && xmlState->hasTagName (apvts.state.getType()))
-        apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
+    if (xmlState == nullptr || ! xmlState->hasTagName (apvts.state.getType()))
+        return;
+
+    // 0 covers both sessions saved before versioning and the embedded factory
+    // presets, which are plain APVTS dumps. Nothing to migrate yet; when the
+    // format changes, branch here before replaceState.
+    const int version = xmlState->getIntAttribute ("version", 0);
+    juce::ignoreUnused (version);
+
+    apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
 }
 
 

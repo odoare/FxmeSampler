@@ -54,7 +54,6 @@ void Sampler::loadSound (Sound& sound)
 //==============================================================================
 void Voice::start (const Sound* sound, int note, float velocity, double sampleRate)
 {
-    std::cout << "Start a sound on note " << note << std::endl;
     activeSound = sound;
     currentNote = note;
     currentPosition = (sound ? (double)sound->sampleStart : 0.0);
@@ -266,8 +265,6 @@ void Sampler::handleMidiEvent (const juce::MidiMessage& message)
                 if (sound.group && sound.group->midiChannel != 0 && sound.group->midiChannel != channel)
                     continue;
 
-                std::cout << "Play a note?" << std::endl;
-
                 // Handle Mute Groups
                 if (sound.muteGroup > 0) // Choke group 0 corresponds to no mute behaviour
                 {
@@ -446,7 +443,7 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
             
             if (sound.data == nullptr)
             {
-                std::cout << "Warning: Could not find resource for sound: " << sound.name << " (resource: " << resourceName << ")" << std::endl;
+                DBG ("Warning: Could not find resource for sound: " << sound.name << " (resource: " << resourceName << ")");
             }
 
             sound.midiNoteRange = juce::Range<int> (child->getIntAttribute ("noteLow"), child->getIntAttribute ("noteHigh") + 1);
