@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          path: SimpleSampler
+          path: FxmeSampler
           submodules: recursive
 
       - uses: actions/checkout@v4
@@ -33,18 +33,18 @@ jobs:
 
       - name: Configure & Build
         run: |
-          cmake -B SimpleSampler/build -S SimpleSampler -DCMAKE_BUILD_TYPE=Release
+          cmake -B FxmeSampler/build -S FxmeSampler -DCMAKE_BUILD_TYPE=Release
           # Build the large BinaryData targets one at a time to avoid OOM.
-          cmake --build SimpleSampler/build --config Release --target BlackWidowDrumsBinaryData --parallel 1
-          cmake --build SimpleSampler/build --config Release --target CenturyDrumsBinaryData   --parallel 1
+          cmake --build FxmeSampler/build --config Release --target BlackWidowDrumsBinaryData --parallel 1
+          cmake --build FxmeSampler/build --config Release --target CenturyDrumsBinaryData   --parallel 1
           # BinaryData is cached; build the rest (capped at 2 to stay within 16 GB RAM).
-          cmake --build SimpleSampler/build --config Release --parallel 2
+          cmake --build FxmeSampler/build --config Release --parallel 2
 
       - name: Package
         run: |
           mkdir -p vst3_staging
-          cp -r "SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" vst3_staging/
-          cp -r "SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release/VST3/CenturyDrums.vst3" vst3_staging/
+          cp -r "FxmeSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" vst3_staging/
+          cp -r "FxmeSampler/build/Kits/Century/CenturyDrums_artefacts/Release/VST3/CenturyDrums.vst3" vst3_staging/
           zip -r ${{ github.workspace }}/FxmeSampler-VST3-Linux-x86_64.zip vst3_staging/
 
       - uses: actions/upload-artifact@v4
@@ -58,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: SimpleSampler
+          path: FxmeSampler
           submodules: recursive
 
       - uses: actions/checkout@v4
@@ -69,12 +69,12 @@ jobs:
 
       - name: Configure & Build
         run: |
-          cmake -B SimpleSampler/build -S SimpleSampler -G "Visual Studio 17 2022"
+          cmake -B FxmeSampler/build -S FxmeSampler -G "Visual Studio 17 2022"
           # Build the large BinaryData targets one at a time to avoid OOM.
-          cmake --build SimpleSampler/build --config Release --target BlackWidowDrumsBinaryData --parallel 1
-          cmake --build SimpleSampler/build --config Release --target CenturyDrumsBinaryData   --parallel 1
+          cmake --build FxmeSampler/build --config Release --target BlackWidowDrumsBinaryData --parallel 1
+          cmake --build FxmeSampler/build --config Release --target CenturyDrumsBinaryData   --parallel 1
           # BinaryData is cached; build the rest in full parallel.
-          cmake --build SimpleSampler/build --config Release --parallel
+          cmake --build FxmeSampler/build --config Release --parallel
 
       - name: Install NSIS
         run: choco install nsis -y
@@ -87,8 +87,8 @@ jobs:
           # A workflow_dispatch run has no tag, so ref_name is a branch name.
           [[ "$VERSION" =~ ^[0-9] ]] || VERSION="1.0.0"
           NSIS="/c/Program Files (x86)/NSIS/makensis.exe"
-          PKG_DIR="${{ github.workspace }}/SimpleSampler/packaging/windows"
-          BUILD_DIR="${{ github.workspace }}/SimpleSampler/build"
+          PKG_DIR="${{ github.workspace }}/FxmeSampler/packaging/windows"
+          BUILD_DIR="${{ github.workspace }}/FxmeSampler/build"
 
           # Black Widow Drums
           cp -r "$BUILD_DIR/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" "$PKG_DIR/"
@@ -107,8 +107,8 @@ jobs:
         with:
           name: windows-installers
           path: |
-            SimpleSampler/packaging/windows/BlackWidowDrums-Windows-Setup.exe
-            SimpleSampler/packaging/windows/CenturyDrums-Windows-Setup.exe
+            FxmeSampler/packaging/windows/BlackWidowDrums-Windows-Setup.exe
+            FxmeSampler/packaging/windows/CenturyDrums-Windows-Setup.exe
 
   # ── macOS universal (arm64 + x86_64) ──────────────────────────────────────
   build-macos:
@@ -116,7 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: SimpleSampler
+          path: FxmeSampler
           submodules: recursive
 
       - uses: actions/checkout@v4
@@ -130,23 +130,23 @@ jobs:
           # The architecture/deployment settings are passed here as well as in
           # CMakeLists.txt: a command-line -D lands in the cache before any
           # CMakeLists line runs, so it cannot be lost to file ordering.
-          cmake -B SimpleSampler/build -S SimpleSampler \
+          cmake -B FxmeSampler/build -S FxmeSampler \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
           # Build the large BinaryData targets one at a time to avoid OOM.
-          cmake --build SimpleSampler/build --config Release --target BlackWidowDrumsBinaryData --parallel 1
-          cmake --build SimpleSampler/build --config Release --target CenturyDrumsBinaryData   --parallel 1
+          cmake --build FxmeSampler/build --config Release --target BlackWidowDrumsBinaryData --parallel 1
+          cmake --build FxmeSampler/build --config Release --target CenturyDrumsBinaryData   --parallel 1
           # BinaryData is cached; build capped at 2 (7 GB RAM + universal binary overhead).
-          cmake --build SimpleSampler/build --config Release --parallel 2
+          cmake --build FxmeSampler/build --config Release --parallel 2
 
       # This step must be able to fail. `lipo -info` printing "arm64" while the
       # job goes green is exactly how an arm64-only release ships.
       - name: Verify universal binaries
         run: |
           set -uo pipefail
-          BW="SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release"
-          CT="SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release"
+          BW="FxmeSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release"
+          CT="FxmeSampler/build/Kits/Century/CenturyDrums_artefacts/Release"
           status=0
           for bundle in \
             "$BW/VST3/Black Widow Drums.vst3/Contents/MacOS/Black Widow Drums" \
@@ -176,8 +176,8 @@ jobs:
       - name: Ad-hoc codesign
         run: |
           set -euo pipefail
-          BW="SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release"
-          CT="SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release"
+          BW="FxmeSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release"
+          CT="FxmeSampler/build/Kits/Century/CenturyDrums_artefacts/Release"
           for b in \
             "$BW/VST3/Black Widow Drums.vst3" \
             "$BW/AU/Black Widow Drums.component" \
@@ -199,13 +199,13 @@ jobs:
           [[ "$VERSION" =~ ^[0-9] ]] || VERSION="1.0.0"
           mkdir -p pkg_root/Library/Audio/Plug-Ins/VST3
           mkdir -p pkg_root/Library/Audio/Plug-Ins/Components
-          cp -r "SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" \
+          cp -r "FxmeSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" \
                 "pkg_root/Library/Audio/Plug-Ins/VST3/"
-          cp -r "SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release/VST3/CenturyDrums.vst3" \
+          cp -r "FxmeSampler/build/Kits/Century/CenturyDrums_artefacts/Release/VST3/CenturyDrums.vst3" \
                 "pkg_root/Library/Audio/Plug-Ins/VST3/"
-          cp -r "SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/AU/Black Widow Drums.component" \
+          cp -r "FxmeSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/AU/Black Widow Drums.component" \
                 "pkg_root/Library/Audio/Plug-Ins/Components/"
-          cp -r "SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release/AU/CenturyDrums.component" \
+          cp -r "FxmeSampler/build/Kits/Century/CenturyDrums_artefacts/Release/AU/CenturyDrums.component" \
                 "pkg_root/Library/Audio/Plug-Ins/Components/"
           pkgbuild \
             --root pkg_root \
@@ -222,10 +222,10 @@ jobs:
       - name: Package VST3 and AU zips
         run: |
           mkdir -p vst3_staging au_staging
-          cp -r "SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" vst3_staging/
-          cp -r "SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release/VST3/CenturyDrums.vst3" vst3_staging/
-          cp -r "SimpleSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/AU/Black Widow Drums.component" au_staging/
-          cp -r "SimpleSampler/build/Kits/Century/CenturyDrums_artefacts/Release/AU/CenturyDrums.component" au_staging/
+          cp -r "FxmeSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/VST3/Black Widow Drums.vst3" vst3_staging/
+          cp -r "FxmeSampler/build/Kits/Century/CenturyDrums_artefacts/Release/VST3/CenturyDrums.vst3" vst3_staging/
+          cp -r "FxmeSampler/build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/AU/Black Widow Drums.component" au_staging/
+          cp -r "FxmeSampler/build/Kits/Century/CenturyDrums_artefacts/Release/AU/CenturyDrums.component" au_staging/
           zip -r ${{ github.workspace }}/FxmeSampler-VST3-macOS-universal.zip vst3_staging/
           zip -r ${{ github.workspace }}/FxmeSampler-AU-macOS-universal.zip au_staging/
 

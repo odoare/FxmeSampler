@@ -5,9 +5,16 @@
 **/wav/reaper_testproject/reaper_testplug/Backups
 **/wav/reaper_testproject/Backups
 **/MyKits
+**/__pycache__
 /build/
-/packaging/windows/SimpleSampler.vst3
-/packaging/windows/SimpleSampler-Windows-Setup.exe
 /JUCE
 /CMakeFiles
+
+# NSIS staging: the installer script copies the .vst3 in beside itself and the
+# generated installers land here. One per kit.
+/packaging/windows/*.vst3
+/packaging/windows/*-Windows-Setup.exe
+
+# Editor workspaces are personal, except the one checked in for this project.
 *.code-workspace
+!/FxmeSampler.code-workspace

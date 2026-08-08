@@ -40,17 +40,17 @@ If you prefer not to use the installer, `FxmeSampler-VST3-macOS-universal.zip` a
 
 ### Windows
 
-1. Download `SimpleSampler-Windows-Setup.exe`.
+1. Download `BlackWidowDrums-Windows-Setup.exe` and/or `CenturyDrums-Windows-Setup.exe` (one installer per kit).
 2. Right-click and choose **Run as administrator**, then follow the installer steps — it copies the VST3 to `C:\Program Files\Common Files\VST3\`.
 3. In Reaper, go to **Options → Preferences → Plug-ins → VST** and click **Re-scan** to detect the new plugin.
 
 ### Linux
 
-1. Download `SimpleSampler-VST3-Linux-x86_64.zip` (or `-arm64` for ARM systems).
+1. Download `FxmeSampler-VST3-Linux-x86_64.zip`.
 2. Unzip and copy the `.vst3` bundle to `~/.vst3/`:
    ```bash
-   unzip SimpleSampler-VST3-Linux-x86_64.zip
-   cp -r VST3/SimpleSampler.vst3 ~/.vst3/
+   unzip FxmeSampler-VST3-Linux-x86_64.zip
+   cp -r vst3_staging/*.vst3 ~/.vst3/
    ```
 3. In Reaper, go to **Options → Preferences → Plug-ins → VST** and click **Re-scan**.
 

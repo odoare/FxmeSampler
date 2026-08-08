@@ -18,39 +18,35 @@ juce_add_plugin(BlackWidowDrums
     BUNDLE_ID                   "com.fxmechanics.BlackWidowDrums"
 )
 
+# Everything under data/ is embedded; the lists below are globbed rather than
+# written out by hand, which had already drifted (a preset that never shipped,
+# and several unused takes). CONFIGURE_DEPENDS makes the build re-scan these
+# directories and reconfigure when their contents change, so a file dropped in
+# data/ is picked up without editing this file.
+#
+# The flip side is that ANYTHING in data/ ships. Working sources (GIMP
+# projects, photo originals, unused takes) belong in art/, which is never
+# scanned. The counts below are printed at configure time as a tripwire: if
+# they jump unexpectedly, something landed in data/ that should not have.
+file(GLOB BW_WAVS    CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/wav/*.wav")
+file(GLOB BW_PRESETS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/Presets/*.xml")
+file(GLOB BW_IMAGES  CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/img/*.png"
+                                      "${CMAKE_CURRENT_SOURCE_DIR}/data/img/*.jpg")
+
+list(LENGTH BW_WAVS    _bw_nwav)
+list(LENGTH BW_PRESETS _bw_npreset)
+list(LENGTH BW_IMAGES  _bw_nimg)
+message(STATUS "BlackWidow: embedding ${_bw_nwav} samples, ${_bw_npreset} presets, ${_bw_nimg} images")
+
 juce_add_binary_data(BlackWidowDrumsBinaryData SOURCES
-    # Mapping
+    # Mapping: the one file that must exist, so it stays explicit.
     data/mapping.xml
 
-    # Presets
-    data/Presets/Canyon.xml
-    "data/Presets/Detune+Reverb.xml"
-    data/Presets/Factory.xml
-    data/Presets/Jungle.xml
-    data/Presets/NaturalAcoustic.xml
-    data/Presets/Reverbered.xml
-    data/Presets/Saturation.xml
-    data/Presets/Shorty.xml
-    data/Presets/ShortyNDelay.xml
-    data/Presets/Tiy.xml
-    data/Presets/Wide.xml
+    ${BW_PRESETS}
+    ${BW_IMAGES}
+    ${BW_WAVS}
 
-    # Images — kit-specific
-    data/img/BlackWidow_BlackBackground.png
-    data/img/Cymb.jpg
-    data/img/drums.jpg
-    data/img/HH.jpg
-    data/img/Kick.jpg
-    data/img/Room.jpg
-    data/img/Snare.jpg
-    data/img/TomH.jpg
-    data/img/white_kick.png
-    data/img/white_snare.png
-    data/img/white_tomh.png
-    data/img/white_toml.png
-    data/img/whitedrums.jpg
-
-    # Images — shared from repo root
+    # Shared across kits, from outside this directory.
     ../../img/logo686.png
     ../../img/tube.png
     ../../img/tube_bw.png
@@ -60,40 +56,6 @@ juce_add_binary_data(BlackWidowDrumsBinaryData SOURCES
     # tube2_bw_png) when the On button is toggled.
     ../../FxmeFX/Source/Tube/img/tube2.png
     ../../FxmeFX/Source/Tube/img/tube2_bw.png
-
-    # Sounds
-    "data/wav/3 CYMB CRASH18 0 49 49 49.wav"
-    "data/wav/3 HH HHf 1 44 44 44.wav"
-    "data/wav/3 HH HHO 1 46 46 46.wav"
-    "data/wav/4 CYMB CRASH10 0 49 49 49.wav"
-    "data/wav/4 CYMB CRASH16 0 57 57 57.wav"
-    "data/wav/4 CYMB StackLong 2 54 54 54.wav"
-    "data/wav/6 CYMB Ride2 0 50 50 50.wav"
-    "data/wav/6 CYMB RideBell 0 53 53 53.wav"
-    "data/wav/7 CYMB Ride1 0 51 51 51.wav"
-    "data/wav/7 CYMB StackShort 2 55 55 55.wav"
-    "data/wav/9 AmbixSnare AmbixStick 0 37 37 37.wav"
-    "data/wav/9 ProxSnare ProxStick 0 37 37 37.wav"
-    "data/wav/10 AmbixKick AmbixKick 0 36 36 36.wav"
-    "data/wav/10 AmbixSnare AmbixSnareSide 0 39 39 39.wav"
-    "data/wav/10 ProxKick ProxKick 0 36 36 36.wav"
-    "data/wav/10 ProxSnare ProxSnareSide 0 39 39 39.wav"
-    "data/wav/12 HH HHC2 1 43 43 43.wav"
-    "data/wav/15 AmbixTomL AmbixTomL 0 45 45 45.wav"
-    "data/wav/15 ProxTomL ProxTomL 0 45 45 45.wav"
-    "data/wav/16 AmbixTomH AmbixTomH 0 47 47 47.wav"
-    "data/wav/16 ProxTomH ProxTomH 0 47 47 47.wav"
-    "data/wav/18 HH HHC1 1 42 42 42.wav"
-    "data/wav/20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav"
-    "data/wav/20 ProxSnare ProxSnareMiddle 0 38 38 38.wav"
-    "data/wav/Council Chamber.wav"
-    "data/wav/Forest long.wav"
-    "data/wav/Forest short.wav"
-    "data/wav/Rectangular room large.wav"
-    "data/wav/Rectangular room medium.wav"
-    "data/wav/Rectangular room small.wav"
-    data/wav/Room\ IR1.wav
-    data/wav/Room\ IR2.wav
 )
 
 # Embedded WAV arrays are huge; optimizing/LTO-ing byte arrays wastes RAM and

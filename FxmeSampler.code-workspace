@@ -4,7 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "../FxmeJuceTools"
+			"path": "FxmeFX"
+		},
+		{
+			"path": "FxmeFX/lib/FxmeTools"
 		}
 	],
 	"settings": {}

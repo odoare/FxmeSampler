@@ -16,11 +16,14 @@ FxmeSampler/
   CMakeLists.txt            root: JUCE, FxmeTools, shared assets, kit selection
   Source/                   the shared engine (compiled into every kit)
   Kits/BlackWidow/          BlackWidowDrums  (PLUGIN_CODE BWDR)
+    data/                   everything that ships: mapping.xml, wav, Presets, img
+    art/                    working sources, never embedded
   Kits/Century/             CenturyDrums     (PLUGIN_CODE CTDR)
   FxmeFX/                   submodule: the effect components (EQ, comp, tube, ...)
     lib/FxmeTools/          submodule of FxmeFX: shared controls, DSP, WDL
       WDL/                  submodule of FxmeTools: convolution engine
   img/                      assets shared by all kits
+  packaging/windows/        NSIS installer script
   MyKits/                   kit authoring area (gitignored)
   Tools/                    Python helpers for generating mapping.xml
   ../JUCE                   JUCE 8 as a SIBLING directory, not a submodule
@@ -60,7 +63,22 @@ The root CMakeLists does four things, in this order, and the order matters:
 
 Each kit CMakeLists then declares its plugin, its own BinaryData target, the
 shared engine sources, the FxmeFX component sources, and finishes with
-fxmetools_attach(<target>). That helper links the module and compiles the WDL
+fxmetools_attach(<target>).
+
+The BinaryData contents are globbed, not listed by hand: data/wav/*.wav,
+data/<presets>/*.xml and data/img/*.{png,jpg}, each with CONFIGURE_DEPENDS so
+the build re-scans those directories and reconfigures when they change. Only
+mapping.xml and the few assets from outside the kit directory stay explicit.
+
+The rule that follows from this is: everything in data/ ships. GIMP projects,
+photo originals and unused takes belong in art/, which is never scanned. Each
+kit prints its embedded counts at configure time ("BlackWidow: embedding 32
+samples, 12 presets, 11 images"); those numbers are the tripwire for something
+having landed in data/ by accident.
+
+The hand-written lists this replaced had already drifted in both directions: a
+finished preset that never shipped, and two images that had been deleted from
+the working tree while the list still named them. That helper links the module and compiles the WDL
 convolution engine (convoengine.cpp, fft.c, resample.cpp) from FxmeTools' own
 WDL submodule, reached through <convoengine.h> by ConvolReverb.
 
@@ -226,9 +244,9 @@ equivalent workflow is:
    lands in <user app data>/FxmeSampler/<plugin name>/Presets.
 2. Copy it into the kit's preset directory (Kits/BlackWidow/data/Presets or
    Kits/Century/Data/presets).
-3. Add it to that kit's juce_add_binary_data SOURCES list. The lists are
-   explicit, not globbed, so a file that is not listed is silently absent.
-4. Rebuild the kit's BinaryData target.
+3. Rebuild the kit's BinaryData target. The directory is globbed, so there is
+   no list to edit; the preset count printed at configure time should go up by
+   one.
 
 Two details make this work without any editing of the file. The saved XML
 carries the free-text display name in a presetName attribute, and
@@ -347,8 +365,20 @@ Ordered as a plan; the first two are done.
    (dsp/AmbixToStereo.h), rebuilt on dsp/Ambisonics.h. Source/AmbixToMS.h is now
    a re-export so the local type name still works; Source/AmbixToMS.cpp is gone
    and both kit CMakeLists dropped it.
-6. Tree and naming. The repository is FxmeSampler, the CMake project is
-   SimpleSamplerSuite, the workspace file is SimpleSampler.code-workspace and CI
-   checks out into SimpleSampler. .gitignore still lists artifact names the build
-   stopped producing at the kit split. Several images at img/ and the two XML
-   files at Presets/ are referenced by nothing.
+6. Done (August 2026). Everything is named FxmeSampler: the CMake project, the
+   workspace file and the CI checkout path. .gitignore was rewritten (the stale
+   per-artifact paths became wildcards, __pycache__ was added, and the tracked
+   workspace file is an explicit exception to the *.code-workspace rule). The
+   orphaned Presets/*.xml were deleted, along with the Projucer-era Builds/ and
+   the in-source JUCE/ and CMakeFiles/ residue. The unused images under img/
+   were kept deliberately: they are plausibly the authoring originals for the
+   per-kit copies under Kits/*/data/img/.
+
+Remaining, not yet done:
+
+7. A .gitattributes to settle the mixed line endings. Deferred because
+   `* text=auto` renormalises files as they are next committed, which spreads a
+   whole-file diff across unrelated commits. Worth doing as one deliberate
+   commit that touches every source file at once, not as a side effect.
+8. Optionally an fxme::PresetBarComponent in the tab bar, so the current preset
+   name and dirty marker stay visible from the tabs other than Welcome.
