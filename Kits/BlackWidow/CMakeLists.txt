@@ -106,7 +106,6 @@ target_compile_options(BlackWidowDrumsBinaryData PRIVATE
 
 target_sources(BlackWidowDrums PRIVATE
     # Shared engine — relative to this kit directory
-    ../../Source/AmbixToMS.cpp
     ../../Source/EffectChain.cpp
     ../../Source/EffectChainComponent.cpp
     ../../Source/EffectChainDelay.cpp

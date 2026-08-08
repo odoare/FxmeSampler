@@ -127,6 +127,13 @@ The effect components themselves come from FxmeFX, so the mixer strips get the
 same EQ, compressor, tube and convolution reverb that ship as standalone
 plugins.
 
+The ambisonic strips decode through fxme::AmbixToStereo (FxmeTools), a virtual
+mid/side pair: a cardioid pointed at the strip's azimuth and elevation for the
+mid, a horizontal figure-of-eight a quarter turn from it for the side, matrixed
+as L = M + width * S. It reads only W, Y, Z and X, and adds into the
+destination rather than overwriting, so several strips can sum into one bus.
+Source/AmbixToMS.h re-exports it under the old name.
+
 ## Threading contract
 
 There are no locks anywhere in Source/, and this is deliberate rather than an
@@ -336,10 +343,10 @@ Ordered as a plan; the first two are done.
    an InfoButton and the TextEntryFocusFixer. The FxmeFX effect components keep
    their own look-and-feel instances: they are shared with the standalone
    plugins and are not this project's to change.
-5. FxmeTools promotion. AmbixToMS is a generic first-order B-format to mid/side
-   decoder with nothing sampler-specific about it, and FxmeTools already has
-   dsp/Ambisonics.h with the primitives it reimplements by hand. It belongs in
-   FxmeTools, where AmbiRR2, AmbiProbe and Localizer could use it.
+5. Done (August 2026). AmbixToMS moved to FxmeTools as fxme::AmbixToStereo
+   (dsp/AmbixToStereo.h), rebuilt on dsp/Ambisonics.h. Source/AmbixToMS.h is now
+   a re-export so the local type name still works; Source/AmbixToMS.cpp is gone
+   and both kit CMakeLists dropped it.
 6. Tree and naming. The repository is FxmeSampler, the CMake project is
    SimpleSamplerSuite, the workspace file is SimpleSampler.code-workspace and CI
    checks out into SimpleSampler. .gitignore still lists artifact names the build

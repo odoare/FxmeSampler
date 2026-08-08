@@ -3,28 +3,15 @@
 
     AmbixToMS.h
 
+    The decoder now lives in FxmeTools (fxme::AmbixToStereo), where the other
+    ambisonic projects can use it. This header is a thin re-export kept so the
+    existing includes and the AmbixToMS type name stay valid.
+
   ==============================================================================
 */
 
 #pragma once
 
-#include <JuceHeader.h>
+#include <FxmeTools/dsp/AmbixToStereo.h>
 
-class AmbixToMS
-{
-public:
-    AmbixToMS() = default;
-
-    void setAzimuth (float degrees);
-    void setElevation (float degrees);
-    void setWidth (float width);
-    void setLevel (float level);
-
-    void process (const juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer);
-
-private:
-    float azimuth = 0.0f;
-    float elevation = 0.0f;
-    float width = 1.0f;
-    float level = 1.0f;
-};
+using AmbixToMS = fxme::AmbixToStereo;

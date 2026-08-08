@@ -170,7 +170,6 @@ target_compile_options(CenturyDrumsBinaryData PRIVATE
 
 target_sources(CenturyDrums PRIVATE
     # Shared engine — relative to this kit directory
-    ../../Source/AmbixToMS.cpp
     ../../Source/EffectChain.cpp
     ../../Source/EffectChainComponent.cpp
     ../../Source/EffectChainDelay.cpp
