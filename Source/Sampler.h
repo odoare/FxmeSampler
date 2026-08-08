@@ -173,6 +173,15 @@ private:
 /**
  * @class Sampler
  * @brief The main sampler engine managing sounds and voices.
+ *
+ * Threading: the sound and group collections are built once by
+ * loadSamplesFromXml/assignParameters from the processor constructor, before
+ * the processor is live, and are only read afterwards. processBlock and
+ * updateParams therefore run lock-free on the audio thread.
+ *
+ * If a kit ever needs reloading at runtime, do NOT reintroduce a lock around
+ * processBlock: publish the new sounds/groups with an atomic swap (or a
+ * message-thread suspendProcessing) instead, so the audio thread never blocks.
  */
 class Sampler
 {
@@ -254,5 +263,4 @@ private:
     Voice* findFreeVoice();
     void loadSound (Sound& sound);
     void handleMidiEvent (const juce::MidiMessage& message);
-    juce::CriticalSection lock;
 };

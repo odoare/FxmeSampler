@@ -7,12 +7,11 @@
 */
 
 #include "SampleGroupComponent.h"
+#include "Theme.h"
 
 void SampleGroupComponent::setSliderColours (juce::Slider& s, juce::Colour c)
 {
-    s.setColour (juce::Slider::trackColourId, c.darker());
-    s.setColour (juce::Slider::thumbColourId, c);
-    s.setColour (juce::Slider::rotarySliderOutlineColourId, c.darker (2.0f));
+    fxsampler::theme::accentSlider (s, c);
 }
 
 SampleGroupComponent::SampleGroupComponent (SampleGroup& g, juce::AudioProcessorValueTreeState& state)
@@ -25,8 +24,7 @@ SampleGroupComponent::SampleGroupComponent (SampleGroup& g, juce::AudioProcessor
 
     addAndMakeVisible (oneShotButton);
     oneShotButton.setButtonText ("One Shot");
-    oneShotButton.setLookAndFeel (&fxmeLookAndFeel);
-    oneShotButton.setColour (juce::ToggleButton::tickColourId, juce::Colours::purple);
+    oneShotButton.setColour (juce::ToggleButton::tickColourId, fxsampler::theme::groupAccent);
     
     // Assuming parameter naming convention: GroupName_Parameter
     juce::String prefix = group.getName() + "_";
@@ -79,22 +77,13 @@ void SampleGroupComponent::setupSlider (juce::Slider& slider, juce::Label& label
     slider.setRange (min, max);
     slider.setValue (def);
     slider.setTooltip (text);
-    slider.setLookAndFeel (&fxmeLookAndFeel);
     
-    setSliderColours (slider, juce::Colours::purple);
+    setSliderColours (slider, fxsampler::theme::groupAccent);
 }
 
 void SampleGroupComponent::paint (juce::Graphics& g)
 {
-    auto diagonale = (getLocalBounds().getTopLeft() - getLocalBounds().getBottomRight()).toFloat();
-    auto length = diagonale.getDistanceFromOrigin();
-    auto perpendicular = diagonale.rotatedAboutOrigin (juce::degreesToRadians (270.0f)) / length;
-    auto height = float (getWidth() * getHeight()) / length;
-    auto bluegreengrey = juce::Colours::darkgrey.darker(1.f);
-    juce::ColourGradient grad (bluegreengrey.darker().darker().darker(), perpendicular * height,
-                           bluegreengrey, perpendicular * -height, false);
-    g.setGradientFill(grad);
-    g.fillAll();
+    fxsampler::theme::paintPanelBackground (g, getLocalBounds(), fxsampler::theme::groupPanel);
 }
 
 void SampleGroupComponent::resized()

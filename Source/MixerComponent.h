@@ -27,7 +27,8 @@ public:
      * @param sampler The Sampler instance.
      * @param apvts The APVTS.
      */
-    MixerComponent (Mixer& mixer, Sampler& sampler, juce::AudioProcessorValueTreeState& apvts);
+    MixerComponent (Mixer& mixer, Sampler& sampler, juce::AudioProcessorValueTreeState& apvts,
+                    fxme::PresetManager& presetManager);
     ~MixerComponent() override;
 
     void paint (juce::Graphics&) override;

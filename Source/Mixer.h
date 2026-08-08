@@ -15,6 +15,15 @@
 /**
  * @class Mixer
  * @brief Manages the collection of mixer strips and the master output.
+ *
+ * Threading: the strip list is built once by loadFromXml/assignParameters from
+ * the processor constructor, before the processor is live, and is only read
+ * afterwards. prepare() runs from prepareToPlay, which the host guarantees not
+ * to overlap with processBlock. processBlock therefore runs lock-free.
+ *
+ * If strips ever need rebuilding at runtime, do NOT reintroduce a lock around
+ * processBlock: publish the new list with an atomic swap (or a message-thread
+ * suspendProcessing) instead, so the audio thread never blocks.
  */
 class Mixer
 {
@@ -82,5 +91,4 @@ private:
     
     juce::String welcomeText;
     juce::Image welcomeImage;
-    juce::CriticalSection lock;
 };

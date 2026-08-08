@@ -7,6 +7,7 @@
 */
 
 #include "MixerComponent.h"
+#include "Theme.h"
 #include "EffectChainReverbComponent.h"
 #include "EffectChainDelay.h"
 #include "EffectChainDelayComponent.h"
@@ -57,10 +58,13 @@ void MixerComponent::LevelsComponent::resized()
 }
 
 //==============================================================================
-MixerComponent::MixerComponent (Mixer& m, Sampler& s, juce::AudioProcessorValueTreeState& state)
+MixerComponent::MixerComponent (Mixer& m, Sampler& s, juce::AudioProcessorValueTreeState& state,
+                                fxme::PresetManager& presetManager)
     : mixer (m), apvts (state), tabs (juce::TabbedButtonBar::TabsAtTop), levelsComp (m, state), samplerComp (s, state)
 {
-    tabs.addTab("Welcome", juce::Colours::black, new WelcomeTabComponent(mixer.getWelcomeText(), mixer.getWelcomeImage(), apvts), true);
+    // The welcome tab hosts the preset browser alongside the kit artwork.
+    tabs.addTab("Welcome", juce::Colours::black,
+                new WelcomeTabComponent(mixer.getWelcomeText(), mixer.getWelcomeImage(), presetManager), true);
 
     tabs.addTab ("Levels", juce::Colours::black, &levelsComp, false);
     
@@ -105,15 +109,7 @@ MixerComponent::~MixerComponent()
 
 void MixerComponent::paint (juce::Graphics& g)
 {
-    auto diagonale = (getLocalBounds().getTopLeft() - getLocalBounds().getBottomRight()).toFloat();
-    auto length = diagonale.getDistanceFromOrigin();
-    auto perpendicular = diagonale.rotatedAboutOrigin (juce::degreesToRadians (270.0f)) / length;
-    auto height = float (getWidth() * getHeight()) / length;
-    auto bluegreengrey = juce::Colour::fromFloatRGBA (0.15f, 0.15f, 0.25f, 1.0f);
-    juce::ColourGradient grad (bluegreengrey.darker().darker().darker(), perpendicular * height,
-                           bluegreengrey, perpendicular * -height, false);
-    g.setGradientFill(grad);
-    g.fillAll();
+    fxsampler::theme::paintPanelBackground (g, getLocalBounds(), fxsampler::theme::background);
 }
 
 void MixerComponent::resized()

@@ -18,9 +18,19 @@ FxmeSamplerAudioProcessor::FxmeSamplerAudioProcessor()
                        .withOutput ("Aux 2", juce::AudioChannelSet::stereo(), true)
                        .withOutput ("Aux 3", juce::AudioChannelSet::stereo(), true)
                        ),
-       apvts (*this, nullptr, "Parameters", createParameterLayout())
+       apvts (*this, nullptr, "Parameters", createParameterLayout()),
+       presetManager (apvts,
+                      fxme::PresetManager::getDefaultUserPresetDirectory ("FxmeSampler", JucePlugin_Name),
+                      BinaryData::namedResourceList,
+                      BinaryData::namedResourceListSize,
+                      BinaryData::getNamedResource)
 #else
-     : apvts (*this, nullptr, "Parameters", createParameterLayout())
+     : apvts (*this, nullptr, "Parameters", createParameterLayout()),
+       presetManager (apvts,
+                      fxme::PresetManager::getDefaultUserPresetDirectory ("FxmeSampler", JucePlugin_Name),
+                      BinaryData::namedResourceList,
+                      BinaryData::namedResourceListSize,
+                      BinaryData::getNamedResource)
 #endif
 {
     // Load the mapping XML from BinaryData
@@ -34,15 +44,9 @@ FxmeSamplerAudioProcessor::FxmeSamplerAudioProcessor()
         mixer.assignParameters (apvts);
     }
 
-    for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
-    {
-        juce::String resourceName = BinaryData::namedResourceList[i];
-        if (resourceName.endsWithIgnoreCase ("_xml") && resourceName != "mapping_xml")
-        {
-            juce::String displayName = resourceName.dropLastCharacters(4).replaceCharacter('_', ' ');
-            presets.push_back({ displayName, BinaryData::namedResourceList[i] });
-        }
-    }
+    // Factory presets are discovered by presetManager: it keeps every embedded
+    // "*_xml" resource whose root tag matches the APVTS state type, so
+    // mapping_xml (root <Mappings>) is skipped without special-casing it.
 }
 
 FxmeSamplerAudioProcessor::~FxmeSamplerAudioProcessor()
@@ -87,41 +91,42 @@ double FxmeSamplerAudioProcessor::getTailLengthSeconds() const
     return 0.0;
 }
 
+// The host's program menu is a view onto the factory bank, so that it and the
+// editor's PresetComponent always agree on what is loaded. User presets are
+// deliberately not exposed here: the program list has to be fixed in size, and
+// the user bank changes at runtime.
 int FxmeSamplerAudioProcessor::getNumPrograms()
 {
-    return juce::jmax(1, (int)presets.size());
+    return juce::jmax (1, (int) presetManager.getFactoryPresets().size());
 }
 
 int FxmeSamplerAudioProcessor::getCurrentProgram()
 {
-    return currentProgram;
+    // -1 means the current state is a user preset or an unsaved edit; the host
+    // needs a valid index, so report the first program.
+    return juce::jmax (0, presetManager.getCurrentFactoryIndex());
 }
 
 void FxmeSamplerAudioProcessor::setCurrentProgram (int index)
 {
-    if (index >= 0 && index < (int)presets.size())
-    {
-        currentProgram = index;
-        int size = 0;
-        const char* data = BinaryData::getNamedResource(presets[index].resourceName, size);
-        if (data != nullptr && size > 0)
-        {
-            setStateInformation(data, size);
-        }
-    }
+    presetManager.loadFactoryPreset (index);
 }
 
 const juce::String FxmeSamplerAudioProcessor::getProgramName (int index)
 {
-    if (index >= 0 && index < (int)presets.size())
-        return presets[index].name;
+    const auto& factory = presetManager.getFactoryPresets();
+
+    if (juce::isPositiveAndBelow (index, (int) factory.size()))
+        return factory[(size_t) index].name;
+
     return "Default";
 }
 
 void FxmeSamplerAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
-    if (index >= 0 && index < (int)presets.size())
-        presets[index].name = newName;
+    // Factory presets are embedded in the binary and cannot be renamed. Users
+    // rename their own presets through the editor's preset browser.
+    juce::ignoreUnused (index, newName);
 }
 
 //==============================================================================

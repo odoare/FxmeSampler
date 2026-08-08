@@ -77,20 +77,23 @@ public:
      */
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
 
+    /**
+     * @brief Gets the preset manager (factory presets from BinaryData, user
+     *        presets on disk). Shared with the editor's PresetComponent.
+     */
+    fxme::PresetManager& getPresetManager() noexcept { return presetManager; }
+
 private:
     //==============================================================================
     Sampler sampler;
     Mixer mixer;
     juce::AudioProcessorValueTreeState apvts;
+    // Declared after apvts: members are constructed in declaration order and
+    // the manager takes a reference to the state.
+    fxme::PresetManager presetManager;
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioBuffer<float> samplerOutputBuffer;
 
-    struct Preset {
-        juce::String name;
-        const char* resourceName;
-    };
-    std::vector<Preset> presets;
-    int currentProgram = 0;
     double lastBPM = -1.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FxmeSamplerAudioProcessor)

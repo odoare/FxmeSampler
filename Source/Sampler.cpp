@@ -326,7 +326,6 @@ void Sampler::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void Sampler::addSound (const Sound& sound)
 {
-    juce::ScopedLock sl (lock);
     sounds.push_back (sound);
     // Load the audio data into the buffer for the newly added sound
     loadSound (sounds.back());
@@ -343,10 +342,8 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
     if (root == nullptr || ! root->hasTagName ("Mappings"))
         return;
 
-    {
-        juce::ScopedLock sl (lock);
-        sampleCache.clear(); // Clear cache when loading new mapping
-    }
+    sampleCache.clear(); // Clear cache when loading new mapping
+
     std::vector<Sound> newSounds;
     std::vector<std::unique_ptr<SampleGroup>> newSampleGroups;
     int newNumOutputChannels = 2;
@@ -508,19 +505,15 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
         }
     }
 
-    {
-        juce::ScopedLock sl (lock);
-        for (auto& v : voices) v->stop();
-        
-        sounds = std::move(newSounds);
-        sampleGroups = std::move(newSampleGroups);
-        numOutputChannels = newNumOutputChannels;
-    }
+    for (auto& v : voices) v->stop();
+
+    sounds = std::move(newSounds);
+    sampleGroups = std::move(newSampleGroups);
+    numOutputChannels = newNumOutputChannels;
 }
 
 void Sampler::assignParameters (juce::AudioProcessorValueTreeState& apvts)
 {
-    juce::ScopedLock sl (lock);
     for (auto& group : sampleGroups)
     {
         juce::String prefix = group->getName() + "_";
@@ -560,7 +553,6 @@ void SampleGroup::addParameters (std::vector<std::unique_ptr<juce::RangedAudioPa
 
 void Sampler::updateParams()
 {
-    juce::ScopedLock sl (lock);
     for (auto& group : sampleGroups)
     {
         if (group->oneShotParam) group->isOneShot = *group->oneShotParam > 0.5f;
@@ -589,7 +581,6 @@ Voice* Sampler::findFreeVoice()
 
 void Sampler::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::ScopedLock sl (lock);
     const int numSamples = buffer.getNumSamples();
     int currentSample = 0;
 

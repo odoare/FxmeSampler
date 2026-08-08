@@ -7,6 +7,7 @@
 */
 
 #include "MixerStripComponents.h"
+#include "Theme.h"
 
 //==============================================================================
 // StripComponent Base
@@ -15,7 +16,7 @@ StripComponent::StripComponent (MixerStrip& s, juce::AudioProcessorValueTreeStat
 {
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::orange;
+    if (c.isTransparent()) c = fxsampler::theme::ambisonicStripDefault;
 
     addAndMakeVisible (nameBar);
     nameBar.setTitle(strip.getName());
@@ -27,21 +28,18 @@ StripComponent::StripComponent (MixerStrip& s, juce::AudioProcessorValueTreeStat
     levelSlider.setRange (-60.0, 6.0);
     levelSlider.setValue (0.0);
     levelSlider.setTextValueSuffix ("dB");
-    levelSlider.setLookAndFeel(&fxmeLookAndFeel);
     levelSlider.setAttachment(new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, strip.getName() + "_Level", levelSlider));
 
     addAndMakeVisible (muteButton);
     muteButton.setButtonText ("M");
-    muteButton.setColour(juce::ToggleButton::tickColourId, juce::Colours::orange);
-    muteButton.setLookAndFeel(&fxmeLookAndFeel);
+    muteButton.setColour(juce::ToggleButton::tickColourId, fxsampler::theme::muteAccent);
     muteAtt = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (apvts, strip.getName() + "_Mute", muteButton);
     
     if (strip.isSoloable())
     {
         addAndMakeVisible (soloButton);
         soloButton.setButtonText ("S");
-        soloButton.setColour(juce::ToggleButton::tickColourId, juce::Colours::green);
-        soloButton.setLookAndFeel(&fxmeLookAndFeel);
+        soloButton.setColour(juce::ToggleButton::tickColourId, fxsampler::theme::soloAccent);
         soloAtt = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (apvts, strip.getName() + "_Solo", soloButton);
     }
 
@@ -56,8 +54,7 @@ StripComponent::StripComponent (MixerStrip& s, juce::AudioProcessorValueTreeStat
         slider->setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
         slider->setRange (-60.0, 6.0);
         slider->setTooltip ("Send to " + send.busName);
-        slider->setLookAndFeel(&fxmeLookAndFeel);
-        setSliderColours (*slider, juce::Colours::cyan); // Use a distinct color for sends
+        setSliderColours (*slider, fxsampler::theme::sendAccent);
         slider->setAttachment(new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, strip.getName() + "_Send_" + send.busName, *slider));
         addAndMakeVisible (*slider);
         sendSliders.push_back (std::move (slider));
@@ -65,8 +62,7 @@ StripComponent::StripComponent (MixerStrip& s, juce::AudioProcessorValueTreeStat
         auto button = std::make_unique<juce::ToggleButton>();
         button->setButtonText("Pre");
         button->setTooltip("Pre/Post FX+Fader");
-        button->setColour(juce::ToggleButton::tickColourId, juce::Colours::white);
-        button->setLookAndFeel(&fxmeLookAndFeel);
+        button->setColour(juce::ToggleButton::tickColourId, fxsampler::theme::routeAccent);
         addAndMakeVisible(*button);
         prePostAtts.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(apvts, strip.getName() + "_Send_" + send.busName + "_Pre", *button));
         prePostButtons.push_back(std::move(button));
@@ -86,16 +82,7 @@ StripComponent::~StripComponent() { stopTimer(); }
 
 void StripComponent::paint (juce::Graphics& g)
 {
-    auto diagonale = (getLocalBounds().getTopLeft() - getLocalBounds().getBottomRight()).toFloat();
-    auto length = diagonale.getDistanceFromOrigin();
-    auto perpendicular = diagonale.rotatedAboutOrigin (juce::degreesToRadians (270.0f)) / length;
-    auto height = float (getWidth() * getHeight()) / length;
-    auto bluegreengrey = juce::Colour::fromFloatRGBA (0.15f, 0.15f, 0.25f, 1.0f);
-    juce::ColourGradient grad (bluegreengrey.darker().darker(), perpendicular * height,
-                           bluegreengrey, perpendicular * -height, false);
-    g.setGradientFill(grad);
-
-    g.fillAll();
+    fxsampler::theme::paintPanelBackground (g, getLocalBounds(), fxsampler::theme::background, 2);
 }
 
 void StripComponent::resized()
@@ -158,15 +145,12 @@ void StripComponent::setupKnob (fxme::FxmeSlider& s, const juce::String& paramID
     // But we can set default range just in case
     s.setRange (-1.0, 1.0); 
     // Store attachment in subclass
-    s.setLookAndFeel (&fxmeLookAndFeel);
     s.setAttachment(new juce::AudioProcessorValueTreeState::SliderAttachment(apvts, paramID, s));
 }
 
 void StripComponent::setSliderColours (juce::Slider& s, juce::Colour c)
 {
-    s.setColour (juce::Slider::trackColourId, c.darker());
-    s.setColour (juce::Slider::thumbColourId, c);
-    s.setColour (juce::Slider::rotarySliderOutlineColourId, c.darker (2.0f));
+    fxsampler::theme::accentSlider (s, c);
 }
 
 void StripComponent::setStripColor(juce::Colour c)
@@ -190,8 +174,7 @@ void StripComponent::createRouteButtons(juce::AudioProcessorValueTreeState& apvt
         
         btn->setButtonText(juce::String(i));
         btn->setTooltip("Route to " + name);
-        btn->setColour(juce::ToggleButton::tickColourId, juce::Colours::white);
-        btn->setLookAndFeel(&fxmeLookAndFeel);
+        btn->setColour(juce::ToggleButton::tickColourId, fxsampler::theme::routeAccent);
         addAndMakeVisible(*btn);
         
         // Master strip doesn't have these params, so check if param exists
@@ -217,7 +200,7 @@ AmbisonicStripComponent::AmbisonicStripComponent (AmbisonicStrip& s, juce::Audio
     wSlider.setTooltip ("MS mix width");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::orange;
+    if (c.isTransparent()) c = fxsampler::theme::ambisonicStripDefault;
 
     setStripColor(c);
     setSliderColours (azSlider, c);
@@ -283,7 +266,7 @@ AmbisonicMonoStripComponent::AmbisonicMonoStripComponent (AmbisonicMonoStrip& s,
     mixSlider.setTooltip ("Mix (Ambix <-> Mono)");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::orange; // Use same default as Ambisonic
+    if (c.isTransparent()) c = fxsampler::theme::ambisonicStripDefault; // Use same default as Ambisonic
 
     setStripColor(c);
     setSliderColours (azSlider, c);
@@ -349,7 +332,7 @@ MSStripComponent::MSStripComponent (MSStrip& s, juce::AudioProcessorValueTreeSta
     setupKnob (wSlider, s.getName() + "_Width", apvts);
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::cyan;
+    if (c.isTransparent()) c = fxsampler::theme::stereoStripDefault;
 
     setStripColor(c);
     setSliderColours (panSlider, c);
@@ -401,7 +384,7 @@ StereoStripComponent::StereoStripComponent (StereoStrip& s, juce::AudioProcessor
     wSlider.setTooltip ("Stereo Width");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::cyan;
+    if (c.isTransparent()) c = fxsampler::theme::stereoStripDefault;
 
     setStripColor(c);
     setSliderColours (panSlider, c);
@@ -450,7 +433,7 @@ MonoStripComponent::MonoStripComponent (MonoStrip& s, juce::AudioProcessorValueT
     panSlider.setTooltip ("Mono Pan");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::green;
+    if (c.isTransparent()) c = fxsampler::theme::monoStripDefault;
 
     setStripColor(c);
     setSliderColours (panSlider, c);
@@ -497,7 +480,7 @@ StereoReverbStripComponent::StereoReverbStripComponent (StereoReverbStrip& s, ju
     panSlider.setTooltip ("Stereo Pan");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::cyan;
+    if (c.isTransparent()) c = fxsampler::theme::stereoStripDefault;
 
     if (s.reverb.getImpulseNames().size() > 1)
     {
@@ -562,7 +545,7 @@ MonoReverbStripComponent::MonoReverbStripComponent (MonoReverbStrip& s, juce::Au
     panSlider.setTooltip ("Mono Pan");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::cyan;
+    if (c.isTransparent()) c = fxsampler::theme::stereoStripDefault;
 
     if (s.reverb.getImpulseNames().size() > 1)
     {
@@ -630,7 +613,7 @@ BusStripComponent::BusStripComponent (BusStrip& s, juce::AudioProcessorValueTree
     wSlider.setTooltip ("Bus Width");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::purple;
+    if (c.isTransparent()) c = fxsampler::theme::reverbStripDefault;
 
     setStripColor(c);
     setSliderColours (panSlider, c);
@@ -682,7 +665,7 @@ MasterStripComponent::MasterStripComponent (MasterStrip& s, juce::AudioProcessor
     wSlider.setTooltip ("Master Width");
 
     juce::Colour c = s.getColor();
-    if (c.isTransparent()) c = juce::Colours::red;
+    if (c.isTransparent()) c = fxsampler::theme::busStripDefault;
 
     setStripColor(c);
     setSliderColours (panSlider, c);

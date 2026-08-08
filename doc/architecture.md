@@ -1,0 +1,347 @@
+# FxmeSampler architecture
+
+Reference for the code structure, the invariants that are not visible from any
+single file, and the decisions that would otherwise have to be rediscovered.
+The mapping.xml format itself is specified in the README (Configuration:
+mapping.xml) and is not repeated here.
+
+## Repository and dependency chain
+
+FxmeSampler is a suite, not a single plugin. One shared engine under Source/ is
+compiled into one plugin per kit under Kits/, each with its own embedded
+samples, presets, artwork and mapping.xml.
+
+```
+FxmeSampler/
+  CMakeLists.txt            root: JUCE, FxmeTools, shared assets, kit selection
+  Source/                   the shared engine (compiled into every kit)
+  Kits/BlackWidow/          BlackWidowDrums  (PLUGIN_CODE BWDR)
+  Kits/Century/             CenturyDrums     (PLUGIN_CODE CTDR)
+  FxmeFX/                   submodule: the effect components (EQ, comp, tube, ...)
+    lib/FxmeTools/          submodule of FxmeFX: shared controls, DSP, WDL
+      WDL/                  submodule of FxmeTools: convolution engine
+  img/                      assets shared by all kits
+  MyKits/                   kit authoring area (gitignored)
+  Tools/                    Python helpers for generating mapping.xml
+  ../JUCE                   JUCE 8 as a SIBLING directory, not a submodule
+```
+
+The submodules nest three deep, so a plain clone is not enough:
+
+```sh
+git submodule update --init --recursive
+```
+
+FxmeTools arrives through FxmeFX rather than directly. That is deliberate: the
+project already depends on FxmeFX for the effects, and a second independent
+FxmeTools checkout would risk two different versions in one build.
+
+The project moved off the older FxmeJuceTools module (which used to be installed
+at ../JUCE/usermodules) in August 2026. The two cannot coexist: both define
+fxme::FxmeSlider, fxme::FxmeButton, fxme::FxmeMeters and fxme::CracksGenerator,
+and JuceHeader.h includes every linked module, so linking both is a redefinition
+error. FxmeTools has no equivalent of FxmeJuceTools' TitleBar (its TopBar is the
+full plugin header bar with logo and version, not a plain label), so TitleBar was
+copied into Source/TitleBar.h as a plugin-local component.
+
+## CMake structure
+
+The root CMakeLists does four things, in this order, and the order matters:
+
+1. Sets CMAKE_OSX_ARCHITECTURES and CMAKE_OSX_DEPLOYMENT_TARGET before
+   project(). See the macOS section below.
+2. Adds JUCE from the sibling directory.
+3. Includes FxmeFX/lib/FxmeTools/cmake/FxmeTools.cmake, which registers the
+   FxmeTools JUCE module once and defines fxmetools_attach().
+4. Includes FxmeFX/Source/Common/CommonAssets.cmake, which registers
+   FxmeCommonBinaryData (the shared FX-Mechanics logo). Every FxmeFX effect
+   component includes Common/TopBar.h, which embeds that logo, so this target is
+   required even though the kits never draw the bar.
+
+Each kit CMakeLists then declares its plugin, its own BinaryData target, the
+shared engine sources, the FxmeFX component sources, and finishes with
+fxmetools_attach(<target>). That helper links the module and compiles the WDL
+convolution engine (convoengine.cpp, fft.c, resample.cpp) from FxmeTools' own
+WDL submodule, reached through <convoengine.h> by ConvolReverb.
+
+Build one kit rather than both while iterating:
+
+```sh
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DKIT=BlackWidow
+cmake --build build --config Release --target BlackWidowDrumsBinaryData --parallel 1
+cmake --build build --config Release --target BlackWidowDrums_VST3 --parallel 2
+```
+
+Never build with -j$(nproc). Release links with LTO, and a full-core build of
+this project exhausts RAM. The BinaryData targets are built first, serially,
+because they are hundreds of megabytes of embedded WAV; both have
+INTERPROCEDURAL_OPTIMIZATION OFF and -O0 for the same reason (there is nothing
+to optimise in a byte array, and optimising one costs gigabytes).
+
+Building does not install. Copy the .vst3 to the VST3 folder and make the DAW
+rescan, since it caches the loaded module.
+
+## Runtime structure
+
+```
+FxmeSamplerAudioProcessor
+  ├─ Sampler   sounds, sample groups, 64 voices, renders to an N-channel buffer
+  └─ Mixer     strips consuming those channels, a stereo mix bus, master, buses
+```
+
+The processor exposes four stereo output buses (Main, Aux 1, Aux 2, Aux 3).
+
+Everything is driven by mapping.xml, which is embedded in each kit's BinaryData
+as mapping_xml. It is read three times, for three different purposes:
+
+1. In createParameterLayout, on throwaway Sampler and Mixer instances, purely to
+   enumerate the parameters. The APVTS layout has to exist before the real
+   objects do, which is why the temporaries exist.
+2. In the processor constructor, to build the real Sampler and Mixer.
+3. Immediately after, assignParameters caches a std::atomic<float>* for every
+   parameter onto the object that uses it.
+
+That third step is what keeps the audio thread cheap: parameters are read
+through cached atomic pointers, never looked up by string in processBlock.
+getRawParameterValue appears only in the assignParameters functions.
+
+Per block, processBlock does: clear the output buffer, resize the sampler buffer
+if the host changed block size (with avoidReallocating), read the playhead BPM
+and push it to the mixer only when it changed, then sampler.updateParams(),
+sampler.processBlock() into samplerOutputBuffer, and mixer.processBlock() from
+that buffer into the output.
+
+Mixer::processBlock walks the strips in order, handing each one a consecutive
+slice of the sampler's channels (currentInputChannel advances by the strip's
+getNumInputChannels()). Strips sum into the stereo mixBuffer and/or directly
+into the output buses; the master strip then processes mixBuffer into the
+output. Solo is global: if any strip is soloed, only soloed strips process.
+
+Strip types, selected by the type attribute in mapping.xml: ambisonic,
+ambisonicmono, stereo, ms, mono, stereoreverb, reverb, plus MasterStrip and
+BusStrip which are created implicitly. Each strip optionally owns an effect
+chain, selected by the effectChain attribute: Dynamics (EQ, compressor, tube,
+transient), Reverb (convolution reverb, EQ, delay), Delay, or None.
+
+The effect components themselves come from FxmeFX, so the mixer strips get the
+same EQ, compressor, tube and convolution reverb that ship as standalone
+plugins.
+
+## Threading contract
+
+There are no locks anywhere in Source/, and this is deliberate rather than an
+oversight. The invariant that makes it safe:
+
+Every structural mutation (Sampler::loadSamplesFromXml, Mixer::loadFromXml,
+assignParameters) runs in the processor constructor, before the host has the
+processor. The editor only reads (getStrips, getSampleGroups, getMasterStrip).
+Sampler::addSound has no callers at all. prepare() runs from prepareToPlay,
+which no host overlaps with processBlock, and which JUCE's own
+AudioProcessorPlayer locks around in the standalone build. Because mapping.xml
+is compiled into BinaryData, a kit cannot change at runtime.
+
+The audio callbacks previously took a juce::CriticalSection that no other thread
+could contend for. It was removed in August 2026 along with the members
+themselves, and the contract above is documented on both class declarations.
+
+If a kit ever needs reloading at runtime, do not reintroduce a lock around
+processBlock. Publish the new sounds and strips with an atomic pointer swap, or
+suspend processing from the message thread, so the audio thread never blocks.
+
+Allocation on the audio thread: every buffer is sized to the worst case in
+prepare(), and every process() that resizes passes avoidReallocating so a
+smaller host block only changes the reported size. This applies to
+samplerOutputBuffer in the processor, mixBuffer in the Mixer, and tempBuffer and
+busBuffer in every MixerStrip. Any new buffer must follow the same pattern.
+
+Nothing in the audio path prints. std::cout in a note-on handler was removed in
+August 2026; loader diagnostics use DBG, which compiles out of Release.
+
+## State and presets
+
+The saved state is the raw APVTS XML, written with MemoryOutputStream and read
+back with XmlDocument::parse. It is not copyXmlToBinary/getXmlFromBinary.
+
+This matters more than it looks. setCurrentProgram feeds embedded factory preset
+XML straight into setStateInformation, so both paths share the format. Switching
+to the copyXmlToBinary pair would silently fail to load every existing session
+and every factory preset, because getXmlFromBinary expects a magic header that
+plain XML does not have. If that migration ever happens, the read path has to
+accept both forms.
+
+getStateInformation writes version="1" on the state root. setStateInformation
+reads it with a default of 0, which covers both sessions saved before versioning
+and the factory presets (plain APVTS dumps with no attribute). Nothing migrates
+yet; the branch point is marked in the code.
+
+Presets are handled by fxme::PresetManager, owned by the processor and shared
+with the editor. It must be declared after apvts, since members are constructed
+in declaration order and the manager takes a reference to the state.
+
+Factory presets are the XML files under each kit's preset directory, embedded in
+BinaryData. The manager keeps every embedded *_xml resource whose root tag
+matches the APVTS state type, which is Parameters, so mapping_xml (root
+Mappings) is skipped without needing to be special-cased.
+
+User presets are files under
+
+    <user app data>/FxmeSampler/<plugin name>/Presets
+
+so the two kits share a suite folder but keep separate banks, which they must:
+their parameter sets are entirely different and a Century preset is meaningless
+in Black Widow.
+
+The host's program menu (getNumPrograms and friends) is a view onto the factory
+bank rather than a second list, so the host menu and the editor's preset browser
+always agree on what is loaded. User presets are deliberately not exposed there,
+because the program list has to be fixed in size while the user bank changes at
+runtime. getCurrentProgram reports 0 when the manager returns -1, which happens
+when the loaded state is a user preset or an unsaved edit. changeProgramName is
+a no-op: factory presets live in the binary, and users rename their own presets
+in the browser.
+
+Both banks use the same file format as the session state (the APVTS state XML),
+which is why the raw-XML decision above matters to presets too.
+
+The manager offers onBeforeSave, onBeforeLoad and onAfterLoad hooks for
+processors that keep state outside apvts.state. This one does not, so they are
+unused. If per-installation state (say a sample path) is ever added, that is
+where it has to be protected from being overwritten by a preset load.
+
+### Authoring a factory preset
+
+Factory presets are tuned in the plugin and then promoted by hand. The Welcome
+tab used to carry Save and Load buttons for this, writing loose XML through a
+FileChooser; they were removed once the preset manager arrived, and the
+equivalent workflow is:
+
+1. Tune the kit in the plugin, then Save As in the preset browser. The file
+   lands in <user app data>/FxmeSampler/<plugin name>/Presets.
+2. Copy it into the kit's preset directory (Kits/BlackWidow/data/Presets or
+   Kits/Century/Data/presets).
+3. Add it to that kit's juce_add_binary_data SOURCES list. The lists are
+   explicit, not globbed, so a file that is not listed is silently absent.
+4. Rebuild the kit's BinaryData target.
+
+Two details make this work without any editing of the file. The saved XML
+carries the free-text display name in a presetName attribute, and
+buildFactoryList prefers that attribute over the name derived from the
+BinaryData symbol, so spaces and punctuation survive even though the file name
+was legalised. The file also carries presetIsFactory="0" from having been saved
+as a user preset, which is harmless: applyStateXml overwrites both properties
+from the bank the preset was actually loaded from.
+
+An earlier build also wrote a copy of the state to ~/Documents/samplerdata.xml
+on every host save. That debug leftover was removed in August 2026.
+
+## GUI
+
+The editor is thin: FxmeSamplerAudioProcessorEditor owns a MixerComponent, which
+builds the tabs: Welcome, Levels (one strip component per mixer strip), one tab
+per effect chain, and Sampler. The Welcome tab pairs the kit artwork and blurb
+from mapping.xml on the left with an fxme::PresetComponent on the right, sharing
+the processor's manager. Its split is computed in one place (computeAreas) so
+paint() and resized() cannot drift apart. Controls are fxme::FxmeSlider throughout (never a bare juce::Slider
+with a TextBox and a separate Label).
+
+The FxmeFX effect components are embedded directly in the effect tabs. They were
+written for a roughly square slot, so TubeComponent takes an optional
+knobsInSingleRow constructor flag (default false) that lays its four knobs in one
+row and tightens the header margins, for the wide but short slot an effect tab
+gives it. EffectChainDynamicsComponent passes true. The same treatment is worth
+considering for CompressorComponent and TransientComponent, which sit in the same
+column with the same geometry.
+
+Source/Theme.h (namespace fxsampler::theme) holds the palette, the geometry
+ratios and two helpers: accentSlider, which applies one accent colour to a
+slider, and paintPanelBackground, which draws the house diagonal gradient. That
+gradient had been copy-pasted into four paint() methods with two different
+darkening depths, hence the darkenSteps argument. Tune the look there rather
+than with literals in components.
+
+The editor owns the single fxme::FxmeLookAndFeel and sets it with
+setLookAndFeel, clearing it in its destructor. JUCE resolves a component's
+look-and-feel by walking up its parents, so every child inherits it without
+setting its own. It is declared before the components it serves, because members
+are destroyed in reverse declaration order and the look-and-feel has to outlive
+them. Previously each strip component and each sample group owned an instance,
+declared after the sliders pointing at it, which inverted that order.
+
+The editor also owns an fxme::InfoButton (parked over the spare space at the
+right end of the tab bar) and the single fxme::TextEntryFocusFixer, declared
+after the child components. The fixer covers TextEditors under the editor, which
+in practice means FxmeSlider's right-click value entry; it deliberately steps
+aside for modal dialogs, so the preset browser's naming AlertWindow is not its
+responsibility.
+
+## macOS and CI
+
+The release workflow builds Linux, Windows and macOS universal, and publishes
+only on a version tag. It can be exercised by hand with workflow_dispatch.
+
+Two macOS rules that have already caused a broken release elsewhere:
+
+The if(APPLE) block setting CMAKE_OSX_ARCHITECTURES and
+CMAKE_OSX_DEPLOYMENT_TARGET must sit before project(). That is where CMake
+configures the Apple toolchain and reads them; set afterwards, the deployment
+target is ignored and the architectures are unreliable. On GitHub's Apple
+Silicon runners the result is an arm64-only bundle that is named universal,
+installs happily, and fails on every Intel Mac. The workflow also passes both as
+-D on the configure line, because a command-line -D lands in the cache before any
+CMakeLists line runs.
+
+The deployment target is 10.13, not 11.0. 11.0 excludes Catalina even with a
+correct x86_64 slice, and the plugin is simply skipped during the scan. The
+arm64 slice is clamped up by the toolchain anyway, so a low target costs nothing.
+
+The verify step checks all six macOS bundles (VST3, AU and Standalone for both
+kits) for both slices and exits non-zero when one is missing. A verify step that
+only prints lipo -info is how an arm64-only release ships unnoticed.
+
+The plugins are not signed or notarised. CI applies an ad-hoc signature, which
+only makes the bundles internally consistent and does nothing for Gatekeeper.
+The reason a downloaded plugin never appears in a DAW is the quarantine
+attribute, and the fix is the xattr command documented in the README under
+Installing, macOS.
+
+## Conventions
+
+Line endings under Source/ are mixed per file (24 CRLF, 15 LF at the time of
+writing), with no .gitattributes normalising them. A script or editor that
+rewrites a whole file must preserve whatever that file already uses, or the diff
+becomes the entire file. Adding a .gitattributes to settle this would be worth
+doing at some point.
+
+Changes often span the submodule boundary. Commit FxmeFX first, then the bumped
+pointer plus the project changes in the parent. FxmeTools is shared by roughly a
+dozen projects, so keep its public API backward-compatible and additive, and
+preserve APVTS parameter IDs so existing presets and sessions still load.
+
+## Known gaps
+
+Ordered as a plan; the first two are done.
+
+1. Done (August 2026). Removed the Documents file write, the audio-thread
+   prints, and added state versioning.
+2. Done (August 2026). Removed the audio-thread locks and the last reallocating
+   setSize in the audio path.
+3. Done (August 2026). fxme::PresetManager, the browser in the Welcome tab, and
+   the host program menu as a view onto the factory bank. This also retired the
+   Welcome tab's old Save/Load buttons, which wrote loose XML through a
+   FileChooser and called apvts.replaceState directly, bypassing the manager.
+   Still optional: an fxme::PresetBarComponent parked in the tab bar's spare
+   space, so the current preset name and dirty marker stay visible from the
+   other tabs.
+4. Done (August 2026). Source/Theme.h, one FxmeLookAndFeel owned by the editor,
+   an InfoButton and the TextEntryFocusFixer. The FxmeFX effect components keep
+   their own look-and-feel instances: they are shared with the standalone
+   plugins and are not this project's to change.
+5. FxmeTools promotion. AmbixToMS is a generic first-order B-format to mid/side
+   decoder with nothing sampler-specific about it, and FxmeTools already has
+   dsp/Ambisonics.h with the primitives it reimplements by hand. It belongs in
+   FxmeTools, where AmbiRR2, AmbiProbe and Localizer could use it.
+6. Tree and naming. The repository is FxmeSampler, the CMake project is
+   SimpleSamplerSuite, the workspace file is SimpleSampler.code-workspace and CI
+   checks out into SimpleSampler. .gitignore still lists artifact names the build
+   stopped producing at the kit split. Several images at img/ and the two XML
+   files at Presets/ are referenced by nothing.

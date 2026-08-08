@@ -7,75 +7,60 @@
 */
 
 #include "WelcomeTabComponent.h"
+#include "Theme.h"
 
-WelcomeTabComponent::WelcomeTabComponent(const juce::String& text, const juce::Image& image, juce::AudioProcessorValueTreeState& apvts)
-    : text(text), img(image), apvts(apvts)
+WelcomeTabComponent::WelcomeTabComponent(const juce::String& text, const juce::Image& image, fxme::PresetManager& presetManager)
+    : text(text), img(image), presetComp(presetManager)
 {
-    addAndMakeVisible(saveButton);
-    saveButton.setButtonText("Save Preset");
-    saveButton.onClick = [this] { savePreset(); };
-    
-    addAndMakeVisible(loadButton);
-    loadButton.setButtonText("Load Preset");
-    loadButton.onClick = [this] { loadPreset(); };
+    presetComp.setAccentColour (fxsampler::theme::presetAccent);
+    addAndMakeVisible (presetComp);
 }
 
 WelcomeTabComponent::~WelcomeTabComponent()
 {
 }
 
+void WelcomeTabComponent::computeAreas (juce::Rectangle<int>& welcomeArea, juce::Rectangle<int>& presetArea) const
+{
+    auto area = getLocalBounds().reduced (10);
+
+    // The browser needs a usable width for its list and buttons, but must not
+    // swallow a narrow window. removeFromRight clamps on its own if the
+    // requested width exceeds what is left.
+    const int presetWidth = juce::jlimit (fxsampler::theme::welcomePresetMinWidth,
+                                         fxsampler::theme::welcomePresetMaxWidth,
+                                         juce::roundToInt (area.getWidth() * fxsampler::theme::welcomePresetWidthRatio));
+
+    presetArea = area.removeFromRight (presetWidth);
+    area.removeFromRight (10);   // gap between the two halves
+    welcomeArea = area;
+}
+
 void WelcomeTabComponent::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colours::black);
+    g.setColour(fxsampler::theme::panel);
     g.fillAll();
 
-    auto area = getLocalBounds().toFloat().reduced(10);
-    
+    juce::Rectangle<int> welcomeArea, presetArea;
+    computeAreas (welcomeArea, presetArea);
+
+    auto area = welcomeArea.toFloat();
+
     if (img.isValid())
     {
-        auto imgArea = area.removeFromTop(area.getHeight() * 0.8f);
+        auto imgArea = area.removeFromTop(area.getHeight() * fxsampler::theme::welcomeImageHeightRatio);
         g.drawImage(img, imgArea, juce::RectanglePlacement::centred);
     }
-    
-    g.setColour(juce::Colours::white);
-    g.setFont(24.0f);
+
+    g.setColour(fxsampler::theme::text);
+    g.setFont(fxsampler::theme::welcomeTextHeight);
     g.drawFittedText(text, area.toNearestInt(), juce::Justification::centred, 10);
 }
 
 void WelcomeTabComponent::resized()
 {
-    auto area = getLocalBounds();
-    auto buttonArea = area.removeFromBottom(40).reduced(5);
-    
-    saveButton.setBounds(buttonArea.removeFromLeft(100));
-    buttonArea.removeFromLeft(10);
-    loadButton.setBounds(buttonArea.removeFromLeft(100));
-}
+    juce::Rectangle<int> welcomeArea, presetArea;
+    computeAreas (welcomeArea, presetArea);
 
-void WelcomeTabComponent::savePreset()
-{
-    auto file = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("preset.xml");
-    fc = std::make_unique<juce::FileChooser>("Save Preset", file, "*.xml");
-    fc->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles,
-        [this](const juce::FileChooser& chooser) {
-            auto result = chooser.getResult();
-            if (result != juce::File()) {
-                auto state = apvts.copyState();
-                std::unique_ptr<juce::XmlElement> xml(state.createXml());
-                if (xml) xml->writeTo(result);
-            }
-        });
-}
-
-void WelcomeTabComponent::loadPreset()
-{
-    fc = std::make_unique<juce::FileChooser>("Load Preset", juce::File::getSpecialLocation(juce::File::userDocumentsDirectory), "*.xml");
-    fc->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-        [this](const juce::FileChooser& chooser) {
-            auto result = chooser.getResult();
-            if (result != juce::File()) {
-                auto xml = juce::XmlDocument::parse(result);
-                if (xml) apvts.replaceState(juce::ValueTree::fromXml(*xml));
-            }
-        });
+    presetComp.setBounds (presetArea);
 }

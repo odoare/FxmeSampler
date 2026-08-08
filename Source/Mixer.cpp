@@ -14,7 +14,6 @@
 //==============================================================================
 void Mixer::prepare (double sampleRate, int samplesPerBlock)
 {
-    juce::ScopedLock sl (lock);
     currentSampleRate = sampleRate;
     currentSamplesPerBlock = samplesPerBlock;
     mixBuffer.setSize (2, samplesPerBlock); // Stereo mix bus
@@ -102,7 +101,6 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize)
     if (mixerNode == nullptr)
         return;
 
-    juce::ScopedLock sl (lock);
     strips.clear();
 
     for (auto* child : mixerNode->getChildIterator())
@@ -275,7 +273,6 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize)
 
 void Mixer::assignParameters (juce::AudioProcessorValueTreeState& apvts)
 {
-    juce::ScopedLock sl (lock);
     for (auto& strip : strips)
         strip->assignParameters (apvts);
     masterStrip.assignParameters (apvts);
@@ -283,7 +280,6 @@ void Mixer::assignParameters (juce::AudioProcessorValueTreeState& apvts)
 
 void Mixer::addParameters (std::vector<std::unique_ptr<juce::RangedAudioParameter>>& params)
 {
-    juce::ScopedLock sl (lock);
     for (auto& strip : strips)
         strip->addParameters (params);
     masterStrip.addParameters (params);
@@ -298,13 +294,18 @@ void Mixer::setBPM(double bpm)
 
 void Mixer::processBlock (const juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer)
 {
-    juce::ScopedLock sl (lock);
     int currentInputChannel = 0;
     int totalInputChannels = inputBuffer.getNumChannels();
 
-    // Ensure mixBuffer is ready
+    // Ensure mixBuffer is ready. avoidReallocating keeps the audio thread
+    // allocation-free: prepare() sized it to the worst case, so this only
+    // shrinks the reported size when the host sends a smaller block. Same
+    // idiom as every MixerStrip::process.
     if (mixBuffer.getNumChannels() != 2 || mixBuffer.getNumSamples() != outputBuffer.getNumSamples())
-        mixBuffer.setSize (2, outputBuffer.getNumSamples());
+        mixBuffer.setSize (2, outputBuffer.getNumSamples(),
+                           /*keepExistingContent*/ false,
+                           /*clearExtraSpace*/     false,
+                           /*avoidReallocating*/   true);
     mixBuffer.clear();
 
     for (auto& strip : strips)

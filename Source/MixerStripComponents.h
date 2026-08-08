@@ -64,7 +64,6 @@ protected:
 
     VuMeterComponent meterL, meterR;
 
-    fxme::FxmeLookAndFeel fxmeLookAndFeel;
 
 private:
     // FlexBox members for layout to avoid lifetime issues with local FlexBoxes
