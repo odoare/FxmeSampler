@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Mapping>
+<Mappings>
   <WelcomeTab text="Black Widow drums" img="BlackWidow_BlackBackground.png" />
   <Master channels="29" img="logo686.png" color="0,220,255"/>
 
@@ -281,4 +281,4 @@
   <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="85" velHigh="105" sampleStart="1060218" sampleEnd="1543825"/>
   <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="106" velHigh="127" sampleStart="1963521" sampleEnd="2228211"/>
 
-</Mapping>
+</Mappings>

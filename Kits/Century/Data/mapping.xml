@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Mappings>
+<Mapping>
   <WelcomeTab text="The Century kit" img="whitedrums.jpg" />
   <Master channels="12" img="logo686.png" color="55,169,181"/>
 
@@ -107,5 +107,5 @@
   <Sound name="SPLASH_2" group="CYMB" resource="CYMB SPLASH 02 0 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="32" velHigh="63"/>
   <Sound name="SPLASH_3" group="CYMB" resource="CYMB SPLASH 03 0 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="64" velHigh="95"/>
   <Sound name="SPLASH_4" group="CYMB" resource="CYMB SPLASH 04 0 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="96" velHigh="127"/>
-</Mappings>
+</Mapping>
 

@@ -46,7 +46,7 @@ FxmeSamplerAudioProcessor::FxmeSamplerAudioProcessor()
 
     // Factory presets are discovered by presetManager: it keeps every embedded
     // "*_xml" resource whose root tag matches the APVTS state type, so
-    // mapping_xml (root <Mappings>) is skipped without special-casing it.
+    // mapping_xml (root <Mapping>) is skipped without special-casing it.
 }
 
 FxmeSamplerAudioProcessor::~FxmeSamplerAudioProcessor()

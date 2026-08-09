@@ -73,13 +73,16 @@ Artefacts are written per kit, to `build/Kits/BlackWidow/BlackWidowDrums_artefac
 The `mapping.xml` file is the core configuration file. Below is the complete specification of its structure and attributes.
 
 ### Root Element
-The root element must be `<Mappings>`.
+The root element must be `<Mapping>`, matching the file name.
 
 ```xml
-<Mappings>
+<Mapping>
     <!-- Child elements go here -->
-</Mappings>
+</Mapping>
 ```
+
+The older spelling `<Mappings>` is still accepted, so a kit that has not been
+converted keeps loading.
 
 ### 1. Welcome Tab
 Optional. Defines the content for the "Welcome" tab in the UI.

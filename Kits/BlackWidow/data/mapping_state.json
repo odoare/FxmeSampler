@@ -1,0 +1,2421 @@
+{
+  "version": 1,
+  "params": {
+    "n_fft": 1024,
+    "hop": 128,
+    "baseline_s": 0.5,
+    "min_gap_ms": 120.0,
+    "head_over_floor": 8.0,
+    "head_ms": 20.0,
+    "peak_back_ms": 15.0,
+    "peak_fwd_ms": 40.0,
+    "foot_back_ms": 30.0,
+    "smooth_ms": 0.5,
+    "foot_rel_peak": 0.02,
+    "foot_rel_floor": 3.0,
+    "pre_roll_ms": 0.0,
+    "energy_ms": 200.0,
+    "align_members": false,
+    "link_tolerance_ms": 8.0
+  },
+  "takes": [
+    {
+      "name": "Stick",
+      "reference": "9 ProxSnare ProxStick 0 37 37 37.wav",
+      "members": [
+        "9 AmbixSnare AmbixStick 0 37 37 37.wav",
+        "9 ProxSnare ProxStick 0 37 37 37.wav"
+      ],
+      "locked": false,
+      "status": "linked: offset 0 samples (0.00 ms), worst stroke 0 off"
+    },
+    {
+      "name": "Kick",
+      "reference": "10 ProxKick ProxKick 0 36 36 36.wav",
+      "members": [
+        "10 AmbixKick AmbixKick 0 36 36 36.wav",
+        "10 ProxKick ProxKick 0 36 36 36.wav"
+      ],
+      "locked": false,
+      "status": "linked: offset 0 samples (0.00 ms), worst stroke 0 off"
+    },
+    {
+      "name": "SnareSide",
+      "reference": "10 ProxSnare ProxSnareSide 0 39 39 39.wav",
+      "members": [
+        "10 AmbixSnare AmbixSnareSide 0 39 39 39.wav",
+        "10 ProxSnare ProxSnareSide 0 39 39 39.wav"
+      ],
+      "locked": false,
+      "status": "linked: offset 0 samples (0.00 ms), worst stroke 0 off"
+    },
+    {
+      "name": "TomL",
+      "reference": "15 ProxTomL ProxTomL 0 45 45 45.wav",
+      "members": [
+        "15 AmbixTomL AmbixTomL 0 45 45 45.wav",
+        "15 ProxTomL ProxTomL 0 45 45 45.wav"
+      ],
+      "locked": false,
+      "status": "linked: offset 0 samples (0.00 ms), worst stroke 0 off"
+    },
+    {
+      "name": "TomH",
+      "reference": "16 ProxTomH ProxTomH 0 47 47 47.wav",
+      "members": [
+        "16 AmbixTomH AmbixTomH 0 47 47 47.wav",
+        "16 ProxTomH ProxTomH 0 47 47 47.wav"
+      ],
+      "locked": false,
+      "status": "linked: offset 0 samples (0.00 ms), worst stroke 0 off"
+    },
+    {
+      "name": "SnareMiddle",
+      "reference": "20 ProxSnare ProxSnareMiddle 0 38 38 38.wav",
+      "members": [
+        "20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav",
+        "20 ProxSnare ProxSnareMiddle 0 38 38 38.wav"
+      ],
+      "locked": false,
+      "status": "linked: offset 0 samples (0.00 ms), worst stroke 0 off"
+    }
+  ],
+  "files": [
+    {
+      "filename": "10 AmbixKick AmbixKick 0 36 36 36.wav",
+      "expected": 10,
+      "group": "AmbixKick",
+      "family": "AmbixKick",
+      "mute_group": 0,
+      "base_pitch": 36,
+      "note_low": 36,
+      "note_high": 36,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 835579,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 124,
+          "end": 110734,
+          "rms": 0.0041846995547529095,
+          "peak": 0.01571512222290039,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 110734,
+          "end": 209811,
+          "rms": 0.008078066355233058,
+          "peak": 0.03683328628540039,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 209811,
+          "end": 301799,
+          "rms": 0.01282007673718351,
+          "peak": 0.06291377544403076,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 301799,
+          "end": 388445,
+          "rms": 0.025590628295274625,
+          "peak": 0.12450277805328369,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 388445,
+          "end": 476563,
+          "rms": 0.032389617485942955,
+          "peak": 0.15617156028747559,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 476563,
+          "end": 562541,
+          "rms": 0.05580712192410483,
+          "peak": 0.27802979946136475,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 562541,
+          "end": 642385,
+          "rms": 0.0603924543265284,
+          "peak": 0.30742478370666504,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 642385,
+          "end": 716639,
+          "rms": 0.09303978048824611,
+          "peak": 0.490085244178772,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 716639,
+          "end": 780240,
+          "rms": 0.09993285440156344,
+          "peak": 0.5270702838897705,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 780240,
+          "end": 835579,
+          "rms": 0.09862289192663956,
+          "peak": 0.5181946754455566,
+          "locked": true,
+          "rank": 8
+        }
+      ],
+      "warnings": [
+        "10 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "10 AmbixSnare AmbixSnareSide 0 39 39 39.wav",
+      "expected": 10,
+      "group": "AmbixSnare",
+      "family": "AmbixSnareSide",
+      "mute_group": 0,
+      "base_pitch": 39,
+      "note_low": 39,
+      "note_high": 39,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 668463,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 27,
+          "end": 68876,
+          "rms": 0.003632757655609092,
+          "peak": 0.016723275184631348,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 68876,
+          "end": 137505,
+          "rms": 0.014159513562198798,
+          "peak": 0.06506478786468506,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 137505,
+          "end": 209126,
+          "rms": 0.02991658341863915,
+          "peak": 0.14890539646148682,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 209126,
+          "end": 280958,
+          "rms": 0.04639996277330907,
+          "peak": 0.2503061294555664,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 280958,
+          "end": 348666,
+          "rms": 0.06382533560626676,
+          "peak": 0.3558400869369507,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 348666,
+          "end": 413870,
+          "rms": 0.09136105355655887,
+          "peak": 0.4206146001815796,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 413870,
+          "end": 480091,
+          "rms": 0.11854098127142272,
+          "peak": 0.5043736696243286,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 480091,
+          "end": 545515,
+          "rms": 0.08812767745500373,
+          "peak": 0.47227561473846436,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 545515,
+          "end": 609123,
+          "rms": 0.10106637277170727,
+          "peak": 0.6583311557769775,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 609123,
+          "end": 668463,
+          "rms": 0.07507259799476321,
+          "peak": 0.5782841444015503,
+          "locked": true,
+          "rank": 8
+        }
+      ],
+      "warnings": [
+        "10 locked start(s) kept from the state file",
+        "5 stroke(s) re-ranked from take reference"
+      ]
+    },
+    {
+      "filename": "10 ProxKick ProxKick 0 36 36 36.wav",
+      "expected": 10,
+      "group": "ProxKick",
+      "family": "ProxKick",
+      "mute_group": 0,
+      "base_pitch": 36,
+      "note_low": 36,
+      "note_high": 36,
+      "n_channels": 1,
+      "sample_rate": 44100,
+      "n_frames": 835579,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 124,
+          "end": 110734,
+          "rms": 0.0033108340759691888,
+          "peak": 0.013917207717895508,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 110734,
+          "end": 209811,
+          "rms": 0.007067365721488763,
+          "peak": 0.03915977478027344,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 209811,
+          "end": 301799,
+          "rms": 0.012066183314582979,
+          "peak": 0.06679785251617432,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 301799,
+          "end": 388445,
+          "rms": 0.024490873965273677,
+          "peak": 0.1459287405014038,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 388445,
+          "end": 476563,
+          "rms": 0.0306612267539267,
+          "peak": 0.18399584293365479,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 476563,
+          "end": 562541,
+          "rms": 0.05142752704011372,
+          "peak": 0.3260049819946289,
+          "locked": false,
+          "rank": 5
+        },
+        {
+          "start": 562541,
+          "end": 642385,
+          "rms": 0.055505928101544845,
+          "peak": 0.35263538360595703,
+          "locked": false,
+          "rank": 6
+        },
+        {
+          "start": 642385,
+          "end": 716639,
+          "rms": 0.08398786051348453,
+          "peak": 0.5649850368499756,
+          "locked": false,
+          "rank": 7
+        },
+        {
+          "start": 716639,
+          "end": 780240,
+          "rms": 0.08984299507697967,
+          "peak": 0.6065616607666016,
+          "locked": false,
+          "rank": 9
+        },
+        {
+          "start": 780240,
+          "end": 835579,
+          "rms": 0.08912305922931264,
+          "peak": 0.6067565679550171,
+          "locked": false,
+          "rank": 8
+        }
+      ],
+      "warnings": [
+        "2 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "10 ProxSnare ProxSnareSide 0 39 39 39.wav",
+      "expected": 10,
+      "group": "ProxSnare",
+      "family": "ProxSnareSide",
+      "mute_group": 0,
+      "base_pitch": 39,
+      "note_low": 39,
+      "note_high": 39,
+      "n_channels": 1,
+      "sample_rate": 44100,
+      "n_frames": 668463,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 27,
+          "end": 68876,
+          "rms": 0.0013844849979791464,
+          "peak": 0.008069157600402832,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 68876,
+          "end": 137505,
+          "rms": 0.006146632628584911,
+          "peak": 0.03024578094482422,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 137505,
+          "end": 209126,
+          "rms": 0.013896166251691464,
+          "peak": 0.06173408031463623,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 209126,
+          "end": 280958,
+          "rms": 0.02425101333570854,
+          "peak": 0.0998305082321167,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 280958,
+          "end": 348666,
+          "rms": 0.03800023184292752,
+          "peak": 0.17578470706939697,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 348666,
+          "end": 413870,
+          "rms": 0.040964725788691876,
+          "peak": 0.23681533336639404,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 413870,
+          "end": 480091,
+          "rms": 0.04346154805687025,
+          "peak": 0.27119624614715576,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 480091,
+          "end": 545515,
+          "rms": 0.04406176011656121,
+          "peak": 0.28124916553497314,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 545515,
+          "end": 609123,
+          "rms": 0.06107196460110104,
+          "peak": 0.3552544116973877,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 609123,
+          "end": 668463,
+          "rms": 0.04742324514952597,
+          "peak": 0.2448819875717163,
+          "locked": true,
+          "rank": 8
+        }
+      ],
+      "warnings": [
+        "10 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "12 HH HHC2 1 43 43 43.wav",
+      "expected": 12,
+      "group": "HH",
+      "family": "HHC2",
+      "mute_group": 1,
+      "base_pitch": 43,
+      "note_low": 43,
+      "note_high": 43,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 557053,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 45065,
+          "rms": 0.0007197847386255236,
+          "peak": 0.0038721561431884766,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 45065,
+          "end": 91076,
+          "rms": 0.0015016158349688018,
+          "peak": 0.008125066757202148,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 91076,
+          "end": 138315,
+          "rms": 0.0022752500434973385,
+          "peak": 0.017207741737365723,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 138315,
+          "end": 185080,
+          "rms": 0.002370871090868178,
+          "peak": 0.021671175956726074,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 185080,
+          "end": 230857,
+          "rms": 0.005272850985890603,
+          "peak": 0.0340193510055542,
+          "locked": false,
+          "rank": 6
+        },
+        {
+          "start": 230857,
+          "end": 277269,
+          "rms": 0.004781961108574916,
+          "peak": 0.029715538024902344,
+          "locked": false,
+          "rank": 5
+        },
+        {
+          "start": 277269,
+          "end": 324369,
+          "rms": 0.004429835684329256,
+          "peak": 0.023551225662231445,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 324369,
+          "end": 371080,
+          "rms": 0.007421429939756338,
+          "peak": 0.034746408462524414,
+          "locked": false,
+          "rank": 8
+        },
+        {
+          "start": 371080,
+          "end": 417182,
+          "rms": 0.007299146301177847,
+          "peak": 0.04291975498199463,
+          "locked": false,
+          "rank": 7
+        },
+        {
+          "start": 417182,
+          "end": 463115,
+          "rms": 0.00978856983387308,
+          "peak": 0.049727559089660645,
+          "locked": false,
+          "rank": 9
+        },
+        {
+          "start": 463115,
+          "end": 510509,
+          "rms": 0.010205434895728562,
+          "peak": 0.05262196063995361,
+          "locked": false,
+          "rank": 10
+        },
+        {
+          "start": 510509,
+          "end": 557053,
+          "rms": 0.014937898364691926,
+          "peak": 0.07159769535064697,
+          "locked": false,
+          "rank": 11
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "15 AmbixTomL AmbixTomL 0 45 45 45.wav",
+      "expected": 15,
+      "group": "AmbixTomL",
+      "family": "AmbixTomL",
+      "mute_group": 0,
+      "base_pitch": 45,
+      "note_low": 45,
+      "note_high": 45,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 1559747,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 57,
+          "end": 112628,
+          "rms": 0.004773020048331594,
+          "peak": 0.012082457542419434,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 112628,
+          "end": 238862,
+          "rms": 0.03196546912491199,
+          "peak": 0.08910346031188965,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 238862,
+          "end": 359572,
+          "rms": 0.0539430413773206,
+          "peak": 0.16039800643920898,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 359572,
+          "end": 463293,
+          "rms": 0.07420788278193102,
+          "peak": 0.25759613513946533,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 463293,
+          "end": 560731,
+          "rms": 0.1207186246372302,
+          "peak": 0.4256434440612793,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 560731,
+          "end": 652102,
+          "rms": 0.12911924909670053,
+          "peak": 0.46720755100250244,
+          "locked": true,
+          "rank": 8
+        },
+        {
+          "start": 652102,
+          "end": 742890,
+          "rms": 0.17794977895691858,
+          "peak": 0.7106236219406128,
+          "locked": true,
+          "rank": 12
+        },
+        {
+          "start": 742890,
+          "end": 835598,
+          "rms": 0.19005106511216407,
+          "peak": 0.7783716917037964,
+          "locked": true,
+          "rank": 13
+        },
+        {
+          "start": 835598,
+          "end": 946212,
+          "rms": 0.008722690569443196,
+          "peak": 0.022771477699279785,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 946212,
+          "end": 1053786,
+          "rms": 0.03643218281773923,
+          "peak": 0.1040884256362915,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 1053786,
+          "end": 1158294,
+          "rms": 0.06592075516265256,
+          "peak": 0.2294628620147705,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 1158294,
+          "end": 1252713,
+          "rms": 0.13428560583769933,
+          "peak": 0.5006827116012573,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 1252713,
+          "end": 1341381,
+          "rms": 0.15725274799212688,
+          "peak": 0.5943552255630493,
+          "locked": true,
+          "rank": 10
+        },
+        {
+          "start": 1341381,
+          "end": 1443110,
+          "rms": 0.16500763306578037,
+          "peak": 0.6487826108932495,
+          "locked": true,
+          "rank": 11
+        },
+        {
+          "start": 1443110,
+          "end": 1559747,
+          "rms": 0.20181289742412725,
+          "peak": 0.8426605463027954,
+          "locked": true,
+          "rank": 14
+        }
+      ],
+      "warnings": [
+        "15 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "15 ProxTomL ProxTomL 0 45 45 45.wav",
+      "expected": 15,
+      "group": "ProxTomL",
+      "family": "ProxTomL",
+      "mute_group": 0,
+      "base_pitch": 45,
+      "note_low": 45,
+      "note_high": 45,
+      "n_channels": 1,
+      "sample_rate": 44100,
+      "n_frames": 1559747,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 57,
+          "end": 112628,
+          "rms": 0.0016674346004161525,
+          "peak": 0.00503087043762207,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 112628,
+          "end": 238862,
+          "rms": 0.014315550535079323,
+          "peak": 0.08200502395629883,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 238862,
+          "end": 359572,
+          "rms": 0.02676693535380098,
+          "peak": 0.17626512050628662,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 359572,
+          "end": 463293,
+          "rms": 0.04037241885388467,
+          "peak": 0.2434159517288208,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 463293,
+          "end": 560731,
+          "rms": 0.05554593168167619,
+          "peak": 0.3846856355667114,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 560731,
+          "end": 652102,
+          "rms": 0.06030865829565828,
+          "peak": 0.3716698884963989,
+          "locked": true,
+          "rank": 8
+        },
+        {
+          "start": 652102,
+          "end": 742890,
+          "rms": 0.08773463935257945,
+          "peak": 0.5252705812454224,
+          "locked": true,
+          "rank": 12
+        },
+        {
+          "start": 742890,
+          "end": 835598,
+          "rms": 0.0891542824470451,
+          "peak": 0.6376152038574219,
+          "locked": true,
+          "rank": 13
+        },
+        {
+          "start": 835598,
+          "end": 946212,
+          "rms": 0.0032676315159048813,
+          "peak": 0.011099100112915039,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 946212,
+          "end": 1053786,
+          "rms": 0.017410700433999303,
+          "peak": 0.09777534008026123,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 1053786,
+          "end": 1158294,
+          "rms": 0.03565726239923423,
+          "peak": 0.22196340560913086,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 1158294,
+          "end": 1252713,
+          "rms": 0.06039045805537269,
+          "peak": 0.4171508550643921,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 1252713,
+          "end": 1341381,
+          "rms": 0.07970379890189953,
+          "peak": 0.48544061183929443,
+          "locked": true,
+          "rank": 10
+        },
+        {
+          "start": 1341381,
+          "end": 1443110,
+          "rms": 0.0835699299522553,
+          "peak": 0.501091480255127,
+          "locked": true,
+          "rank": 11
+        },
+        {
+          "start": 1443110,
+          "end": 1559747,
+          "rms": 0.09233215253448993,
+          "peak": 0.6686480045318604,
+          "locked": true,
+          "rank": 14
+        }
+      ],
+      "warnings": [
+        "15 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "16 AmbixTomH AmbixTomH 0 47 47 47.wav",
+      "expected": 16,
+      "group": "AmbixTomH",
+      "family": "AmbixTomH",
+      "mute_group": 0,
+      "base_pitch": 47,
+      "note_low": 47,
+      "note_high": 47,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 1643305,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 112810,
+          "rms": 0.001187218974180866,
+          "peak": 0.0031186342239379883,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 112810,
+          "end": 232181,
+          "rms": 0.008810854076975422,
+          "peak": 0.0241013765335083,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 232181,
+          "end": 339926,
+          "rms": 0.013731053867581573,
+          "peak": 0.03678464889526367,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 339926,
+          "end": 439310,
+          "rms": 0.023499572916521643,
+          "peak": 0.06299149990081787,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 439310,
+          "end": 523278,
+          "rms": 0.03954089870309055,
+          "peak": 0.17512524127960205,
+          "locked": true,
+          "rank": 10
+        },
+        {
+          "start": 523278,
+          "end": 623520,
+          "rms": 0.08041051562871898,
+          "peak": 0.3404964208602905,
+          "locked": true,
+          "rank": 14
+        },
+        {
+          "start": 623520,
+          "end": 708736,
+          "rms": 0.09155081063849924,
+          "peak": 0.3090355396270752,
+          "locked": true,
+          "rank": 15
+        },
+        {
+          "start": 708736,
+          "end": 807818,
+          "rms": 0.07442990552657916,
+          "peak": 0.46896791458129883,
+          "locked": true,
+          "rank": 13
+        },
+        {
+          "start": 807818,
+          "end": 919196,
+          "rms": 0.0031239912946266373,
+          "peak": 0.00833284854888916,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 919196,
+          "end": 1039417,
+          "rms": 0.013316202906104134,
+          "peak": 0.03462350368499756,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 1039417,
+          "end": 1156345,
+          "rms": 0.026411156101118265,
+          "peak": 0.0739295482635498,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 1156345,
+          "end": 1256493,
+          "rms": 0.029153058849481574,
+          "peak": 0.09461617469787598,
+          "locked": true,
+          "rank": 8
+        },
+        {
+          "start": 1256493,
+          "end": 1345080,
+          "rms": 0.029691505935344125,
+          "peak": 0.09098851680755615,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 1345080,
+          "end": 1433468,
+          "rms": 0.022733711642487813,
+          "peak": 0.13990545272827148,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 1433468,
+          "end": 1522890,
+          "rms": 0.04908559949745868,
+          "peak": 0.20922791957855225,
+          "locked": true,
+          "rank": 12
+        },
+        {
+          "start": 1522890,
+          "end": 1643305,
+          "rms": 0.05455409514514627,
+          "peak": 0.46987128257751465,
+          "locked": true,
+          "rank": 11
+        }
+      ],
+      "warnings": [
+        "16 locked start(s) kept from the state file",
+        "4 stroke(s) re-ranked from take reference"
+      ]
+    },
+    {
+      "filename": "16 ProxTomH ProxTomH 0 47 47 47.wav",
+      "expected": 16,
+      "group": "ProxTomH",
+      "family": "ProxTomH",
+      "mute_group": 0,
+      "base_pitch": 47,
+      "note_low": 47,
+      "note_high": 47,
+      "n_channels": 1,
+      "sample_rate": 44100,
+      "n_frames": 1643305,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 112810,
+          "rms": 0.0008894207097302234,
+          "peak": 0.0027960538864135742,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 112810,
+          "end": 232181,
+          "rms": 0.006769802251026648,
+          "peak": 0.018206357955932617,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 232181,
+          "end": 339926,
+          "rms": 0.010803874401221056,
+          "peak": 0.02977609634399414,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 339926,
+          "end": 439310,
+          "rms": 0.02026982436637316,
+          "peak": 0.05084526538848877,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 439310,
+          "end": 523278,
+          "rms": 0.0397482458186944,
+          "peak": 0.11740398406982422,
+          "locked": true,
+          "rank": 10
+        },
+        {
+          "start": 523278,
+          "end": 623520,
+          "rms": 0.061030314896357234,
+          "peak": 0.2294614315032959,
+          "locked": true,
+          "rank": 14
+        },
+        {
+          "start": 623520,
+          "end": 708736,
+          "rms": 0.06531927437568857,
+          "peak": 0.26432478427886963,
+          "locked": true,
+          "rank": 15
+        },
+        {
+          "start": 708736,
+          "end": 807818,
+          "rms": 0.059013259652384756,
+          "peak": 0.5219906568527222,
+          "locked": true,
+          "rank": 13
+        },
+        {
+          "start": 807818,
+          "end": 919196,
+          "rms": 0.002421846290626945,
+          "peak": 0.007511615753173828,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 919196,
+          "end": 1039417,
+          "rms": 0.010572127683974196,
+          "peak": 0.02830183506011963,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 1039417,
+          "end": 1156345,
+          "rms": 0.023825058043400273,
+          "peak": 0.06448376178741455,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 1156345,
+          "end": 1256493,
+          "rms": 0.027340219420860234,
+          "peak": 0.07408654689788818,
+          "locked": true,
+          "rank": 8
+        },
+        {
+          "start": 1256493,
+          "end": 1345080,
+          "rms": 0.028290511123150716,
+          "peak": 0.07757961750030518,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 1345080,
+          "end": 1433468,
+          "rms": 0.0212459936222405,
+          "peak": 0.13407254219055176,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 1433468,
+          "end": 1522890,
+          "rms": 0.04590719946794761,
+          "peak": 0.20295488834381104,
+          "locked": true,
+          "rank": 12
+        },
+        {
+          "start": 1522890,
+          "end": 1643305,
+          "rms": 0.045269056659622456,
+          "peak": 0.29791057109832764,
+          "locked": true,
+          "rank": 11
+        }
+      ],
+      "warnings": [
+        "15 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "18 HH HHC1 1 42 42 42.wav",
+      "expected": 18,
+      "group": "HH",
+      "family": "HHC1",
+      "mute_group": 1,
+      "base_pitch": 42,
+      "note_low": 42,
+      "note_high": 42,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 974842,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 50276,
+          "rms": 0.0012531274346952613,
+          "peak": 0.05572938919067383,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 50276,
+          "end": 103274,
+          "rms": 0.00225729870042219,
+          "peak": 0.09584188461303711,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 103274,
+          "end": 157462,
+          "rms": 0.004189759467056179,
+          "peak": 0.1721794605255127,
+          "locked": false,
+          "rank": 5
+        },
+        {
+          "start": 157462,
+          "end": 209474,
+          "rms": 0.005899532344206915,
+          "peak": 0.24680256843566895,
+          "locked": false,
+          "rank": 8
+        },
+        {
+          "start": 209474,
+          "end": 261697,
+          "rms": 0.006605638370249904,
+          "peak": 0.2594810724258423,
+          "locked": false,
+          "rank": 10
+        },
+        {
+          "start": 261697,
+          "end": 313354,
+          "rms": 0.006339380004704936,
+          "peak": 0.22947394847869873,
+          "locked": false,
+          "rank": 9
+        },
+        {
+          "start": 313354,
+          "end": 367875,
+          "rms": 0.014276533377926061,
+          "peak": 0.23864543437957764,
+          "locked": false,
+          "rank": 17
+        },
+        {
+          "start": 367875,
+          "end": 422206,
+          "rms": 0.012102030616837742,
+          "peak": 0.16916322708129883,
+          "locked": false,
+          "rank": 16
+        },
+        {
+          "start": 422206,
+          "end": 482371,
+          "rms": 0.0005164737698172517,
+          "peak": 0.02227473258972168,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 482371,
+          "end": 541011,
+          "rms": 0.0017196329815562772,
+          "peak": 0.06716477870941162,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 541011,
+          "end": 596552,
+          "rms": 0.0030759397745097478,
+          "peak": 0.13661205768585205,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 596552,
+          "end": 653476,
+          "rms": 0.004289180730464464,
+          "peak": 0.14648163318634033,
+          "locked": false,
+          "rank": 6
+        },
+        {
+          "start": 653476,
+          "end": 707288,
+          "rms": 0.0051584056939820095,
+          "peak": 0.22876620292663574,
+          "locked": false,
+          "rank": 7
+        },
+        {
+          "start": 707288,
+          "end": 761980,
+          "rms": 0.0070607869394515,
+          "peak": 0.23317503929138184,
+          "locked": false,
+          "rank": 11
+        },
+        {
+          "start": 761980,
+          "end": 815552,
+          "rms": 0.007467002324070779,
+          "peak": 0.27178895473480225,
+          "locked": false,
+          "rank": 12
+        },
+        {
+          "start": 815552,
+          "end": 868942,
+          "rms": 0.009167707768649284,
+          "peak": 0.3727914094924927,
+          "locked": false,
+          "rank": 14
+        },
+        {
+          "start": 868942,
+          "end": 920610,
+          "rms": 0.009460815623164405,
+          "peak": 0.38028013706207275,
+          "locked": false,
+          "rank": 15
+        },
+        {
+          "start": 920610,
+          "end": 974842,
+          "rms": 0.008823107369257493,
+          "peak": 0.28950321674346924,
+          "locked": false,
+          "rank": 13
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav",
+      "expected": 20,
+      "group": "AmbixSnare",
+      "family": "AmbixSnareMiddle",
+      "mute_group": 0,
+      "base_pitch": 38,
+      "note_low": 38,
+      "note_high": 38,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 1476189,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 86647,
+          "rms": 0.00810137625369456,
+          "peak": 0.03593587875366211,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 86647,
+          "end": 175509,
+          "rms": 0.022486473006649473,
+          "peak": 0.10914742946624756,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 175509,
+          "end": 262115,
+          "rms": 0.039808853607618426,
+          "peak": 0.21036791801452637,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 262115,
+          "end": 340983,
+          "rms": 0.057122038394954035,
+          "peak": 0.2802391052246094,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 340983,
+          "end": 423836,
+          "rms": 0.08887061652916622,
+          "peak": 0.3851276636123657,
+          "locked": true,
+          "rank": 8
+        },
+        {
+          "start": 423836,
+          "end": 500594,
+          "rms": 0.12775719381422787,
+          "peak": 0.5363368988037109,
+          "locked": true,
+          "rank": 10
+        },
+        {
+          "start": 500594,
+          "end": 573232,
+          "rms": 0.1474874824884615,
+          "peak": 0.6818386316299438,
+          "locked": true,
+          "rank": 12
+        },
+        {
+          "start": 573232,
+          "end": 646013,
+          "rms": 0.15828466018105392,
+          "peak": 0.7067943811416626,
+          "locked": true,
+          "rank": 13
+        },
+        {
+          "start": 646013,
+          "end": 716120,
+          "rms": 0.17061962248790785,
+          "peak": 0.8604742288589478,
+          "locked": true,
+          "rank": 17
+        },
+        {
+          "start": 716120,
+          "end": 785602,
+          "rms": 0.16292510695359078,
+          "peak": 0.8036584854125977,
+          "locked": true,
+          "rank": 14
+        },
+        {
+          "start": 785602,
+          "end": 854627,
+          "rms": 0.16000882619427648,
+          "peak": 0.7909132242202759,
+          "locked": true,
+          "rank": 15
+        },
+        {
+          "start": 854627,
+          "end": 919116,
+          "rms": 0.12393371182467927,
+          "peak": 0.9999998807907104,
+          "locked": true,
+          "rank": 19
+        },
+        {
+          "start": 919116,
+          "end": 991105,
+          "rms": 0.004080114641927586,
+          "peak": 0.01977705955505371,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 991105,
+          "end": 1064278,
+          "rms": 0.014688305342042398,
+          "peak": 0.07002818584442139,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 1064278,
+          "end": 1137799,
+          "rms": 0.029203585320951044,
+          "peak": 0.15189647674560547,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 1137799,
+          "end": 1208051,
+          "rms": 0.05352295078110705,
+          "peak": 0.25600767135620117,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 1208051,
+          "end": 1277601,
+          "rms": 0.09452048976383311,
+          "peak": 0.4294084310531616,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 1277601,
+          "end": 1352386,
+          "rms": 0.13053365816487786,
+          "peak": 0.5223872661590576,
+          "locked": true,
+          "rank": 11
+        },
+        {
+          "start": 1352386,
+          "end": 1422803,
+          "rms": 0.14819530449672944,
+          "peak": 0.7349445819854736,
+          "locked": true,
+          "rank": 18
+        },
+        {
+          "start": 1422803,
+          "end": 1476189,
+          "rms": 0.11548678922429736,
+          "peak": 0.7185237407684326,
+          "locked": true,
+          "rank": 16
+        }
+      ],
+      "warnings": [
+        "20 locked start(s) kept from the state file",
+        "10 stroke(s) re-ranked from take reference"
+      ]
+    },
+    {
+      "filename": "20 ProxSnare ProxSnareMiddle 0 38 38 38.wav",
+      "expected": 20,
+      "group": "ProxSnare",
+      "family": "ProxSnareMiddle",
+      "mute_group": 0,
+      "base_pitch": 38,
+      "note_low": 38,
+      "note_high": 38,
+      "n_channels": 1,
+      "sample_rate": 44100,
+      "n_frames": 1476189,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 86647,
+          "rms": 0.002816342606060287,
+          "peak": 0.016029715538024902,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 86647,
+          "end": 175509,
+          "rms": 0.008361641584796669,
+          "peak": 0.04284346103668213,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 175509,
+          "end": 262115,
+          "rms": 0.014242897018801338,
+          "peak": 0.07424139976501465,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 262115,
+          "end": 340983,
+          "rms": 0.01969107984176433,
+          "peak": 0.10685384273529053,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 340983,
+          "end": 423836,
+          "rms": 0.02622786088837213,
+          "peak": 0.15353035926818848,
+          "locked": true,
+          "rank": 8
+        },
+        {
+          "start": 423836,
+          "end": 500594,
+          "rms": 0.03719511158307504,
+          "peak": 0.2142404317855835,
+          "locked": true,
+          "rank": 10
+        },
+        {
+          "start": 500594,
+          "end": 573232,
+          "rms": 0.04540139140741121,
+          "peak": 0.25799715518951416,
+          "locked": true,
+          "rank": 12
+        },
+        {
+          "start": 573232,
+          "end": 646013,
+          "rms": 0.04901886637608101,
+          "peak": 0.25737690925598145,
+          "locked": true,
+          "rank": 13
+        },
+        {
+          "start": 646013,
+          "end": 716120,
+          "rms": 0.05946685646001049,
+          "peak": 0.4074373245239258,
+          "locked": true,
+          "rank": 17
+        },
+        {
+          "start": 716120,
+          "end": 785602,
+          "rms": 0.051878630365773774,
+          "peak": 0.29353344440460205,
+          "locked": true,
+          "rank": 14
+        },
+        {
+          "start": 785602,
+          "end": 854627,
+          "rms": 0.05188886391408248,
+          "peak": 0.2991330623626709,
+          "locked": true,
+          "rank": 15
+        },
+        {
+          "start": 854627,
+          "end": 919116,
+          "rms": 0.07774747726948182,
+          "peak": 0.8918672800064087,
+          "locked": true,
+          "rank": 19
+        },
+        {
+          "start": 919116,
+          "end": 991105,
+          "rms": 0.0014795598590000424,
+          "peak": 0.00881195068359375,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 991105,
+          "end": 1064278,
+          "rms": 0.005367010760296047,
+          "peak": 0.02935659885406494,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 1064278,
+          "end": 1137799,
+          "rms": 0.010568415037993821,
+          "peak": 0.053418636322021484,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 1137799,
+          "end": 1208051,
+          "rms": 0.018715806818390603,
+          "peak": 0.10357034206390381,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 1208051,
+          "end": 1277601,
+          "rms": 0.02856778479753535,
+          "peak": 0.1650536060333252,
+          "locked": true,
+          "rank": 9
+        },
+        {
+          "start": 1277601,
+          "end": 1352386,
+          "rms": 0.04106987447087314,
+          "peak": 0.2678499221801758,
+          "locked": true,
+          "rank": 11
+        },
+        {
+          "start": 1352386,
+          "end": 1422803,
+          "rms": 0.06013255391640141,
+          "peak": 0.4140087366104126,
+          "locked": true,
+          "rank": 18
+        },
+        {
+          "start": 1422803,
+          "end": 1476189,
+          "rms": 0.05460208464398514,
+          "peak": 0.5549041032791138,
+          "locked": true,
+          "rank": 16
+        }
+      ],
+      "warnings": [
+        "19 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "3 CYMB CRASH18 0 49 49 49.wav",
+      "expected": 3,
+      "group": "CYMB",
+      "family": "CRASH18",
+      "mute_group": 0,
+      "base_pitch": 49,
+      "note_low": 49,
+      "note_high": 49,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 2729558,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 944164,
+          "rms": 0.0023218589184745187,
+          "peak": 0.010011792182922363,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 944164,
+          "end": 1917040,
+          "rms": 0.006330457981027069,
+          "peak": 0.024531960487365723,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 1917040,
+          "end": 2729558,
+          "rms": 0.016683655167814483,
+          "peak": 0.06388795375823975,
+          "locked": false,
+          "rank": 2
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "3 HH HHO 1 46 46 46.wav",
+      "expected": 3,
+      "group": "HH",
+      "family": "HHO",
+      "mute_group": 1,
+      "base_pitch": 46,
+      "note_low": 46,
+      "note_high": 46,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 1169811,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 391746,
+          "rms": 0.005627639448419672,
+          "peak": 0.05743408203125,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 391746,
+          "end": 756115,
+          "rms": 0.0087066962308242,
+          "peak": 0.06309568881988525,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 756115,
+          "end": 1169811,
+          "rms": 0.023171765779889802,
+          "peak": 0.06309568881988525,
+          "locked": false,
+          "rank": 2
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "3 HH HHf 1 44 44 44.wav",
+      "expected": 3,
+      "group": "HH",
+      "family": "HHf",
+      "mute_group": 1,
+      "base_pitch": 44,
+      "note_low": 44,
+      "note_high": 44,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 167116,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 55716,
+          "rms": 0.0006487772530736657,
+          "peak": 0.0058165788650512695,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 55716,
+          "end": 111698,
+          "rms": 0.0009965378589371684,
+          "peak": 0.007859945297241211,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 111698,
+          "end": 167116,
+          "rms": 0.00309696077063576,
+          "peak": 0.02447795867919922,
+          "locked": false,
+          "rank": 2
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "4 CYMB CRASH10 0 49 49 49.wav",
+      "expected": 4,
+      "group": "CYMB",
+      "family": "CRASH10",
+      "mute_group": 0,
+      "base_pitch": 49,
+      "note_low": 49,
+      "note_high": 49,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 1448337,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 433,
+          "end": 255653,
+          "rms": 0.002494318844466188,
+          "peak": 0.009389758110046387,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 255653,
+          "end": 624521,
+          "rms": 0.003978205894449988,
+          "peak": 0.01504373550415039,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 624521,
+          "end": 1070263,
+          "rms": 0.01204502466895887,
+          "peak": 0.042292118072509766,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 1070263,
+          "end": 1448337,
+          "rms": 0.04415205296654821,
+          "peak": 0.18510425090789795,
+          "locked": false,
+          "rank": 3
+        }
+      ],
+      "warnings": [
+        "1 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "4 CYMB CRASH16 0 57 57 57.wav",
+      "expected": 4,
+      "group": "CYMB",
+      "family": "CRASH16",
+      "mute_group": 0,
+      "base_pitch": 57,
+      "note_low": 57,
+      "note_high": 57,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 2451032,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 200,
+          "end": 607404,
+          "rms": 0.0022709252389471867,
+          "peak": 0.008806586265563965,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 607404,
+          "end": 1258690,
+          "rms": 0.005005980995728928,
+          "peak": 0.023196101188659668,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 1258690,
+          "end": 2014746,
+          "rms": 0.013985124330371232,
+          "peak": 0.05149412155151367,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 2014746,
+          "end": 2451032,
+          "rms": 0.02155338155838339,
+          "peak": 0.09068059921264648,
+          "locked": false,
+          "rank": 3
+        }
+      ],
+      "warnings": [
+        "1 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "4 CYMB StackLong 2 54 54 54.wav",
+      "expected": 4,
+      "group": "CYMB",
+      "family": "StackLong",
+      "mute_group": 2,
+      "base_pitch": 54,
+      "note_low": 54,
+      "note_high": 54,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 220713,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 194,
+          "end": 54705,
+          "rms": 0.009958505259601484,
+          "peak": 0.04722881317138672,
+          "locked": true,
+          "rank": 0
+        },
+        {
+          "start": 54705,
+          "end": 97122,
+          "rms": 0.020883587040376458,
+          "peak": 0.08679401874542236,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 97122,
+          "end": 156785,
+          "rms": 0.03222510738322548,
+          "peak": 0.16151952743530273,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 156785,
+          "end": 220713,
+          "rms": 0.029151854907502276,
+          "peak": 0.13896048069000244,
+          "locked": false,
+          "rank": 2
+        }
+      ],
+      "warnings": [
+        "1 locked start(s) kept from the state file"
+      ]
+    },
+    {
+      "filename": "6 CYMB Ride2 0 50 50 50.wav",
+      "expected": 6,
+      "group": "CYMB",
+      "family": "Ride2",
+      "mute_group": 0,
+      "base_pitch": 50,
+      "note_low": 50,
+      "note_high": 50,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 2952379,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 455331,
+          "rms": 0.000770241707507832,
+          "peak": 0.02544260025024414,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 455331,
+          "end": 867665,
+          "rms": 0.001570126134494136,
+          "peak": 0.06068539619445801,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 867665,
+          "end": 1279438,
+          "rms": 0.003115875354720454,
+          "peak": 0.10693192481994629,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 1279438,
+          "end": 1686270,
+          "rms": 0.005106792928958939,
+          "peak": 0.17616569995880127,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 1686270,
+          "end": 2346043,
+          "rms": 0.0060687274315800776,
+          "peak": 0.2071136236190796,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 2346043,
+          "end": 2952379,
+          "rms": 0.0073342115375814275,
+          "peak": 0.20589828491210938,
+          "locked": false,
+          "rank": 5
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "6 CYMB RideBell 0 53 53 53.wav",
+      "expected": 6,
+      "group": "CYMB",
+      "family": "RideBell",
+      "mute_group": 0,
+      "base_pitch": 53,
+      "note_low": 53,
+      "note_high": 53,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 2228211,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 323864,
+          "rms": 0.0010498398796713983,
+          "peak": 0.017922639846801758,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 323864,
+          "end": 672703,
+          "rms": 0.0019588475866217734,
+          "peak": 0.03604114055633545,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 672703,
+          "end": 1060218,
+          "rms": 0.005518766696240867,
+          "peak": 0.08793580532073975,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 1060218,
+          "end": 1543825,
+          "rms": 0.008398585699979757,
+          "peak": 0.09010612964630127,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 1543825,
+          "end": 1963521,
+          "rms": 0.0017826151533652888,
+          "peak": 0.02868664264678955,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 1963521,
+          "end": 2228211,
+          "rms": 0.008785429662688197,
+          "peak": 0.14035940170288086,
+          "locked": false,
+          "rank": 5
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "7 CYMB Ride1 0 51 51 51.wav",
+      "expected": 7,
+      "group": "CYMB",
+      "family": "Ride1",
+      "mute_group": 0,
+      "base_pitch": 51,
+      "note_low": 51,
+      "note_high": 51,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 3565137,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 466572,
+          "rms": 0.0008131103360665907,
+          "peak": 0.023184657096862793,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 466572,
+          "end": 964921,
+          "rms": 0.0010172198099075574,
+          "peak": 0.031441569328308105,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 964921,
+          "end": 1396042,
+          "rms": 0.0012217564350463937,
+          "peak": 0.03365898132324219,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 1396042,
+          "end": 1853577,
+          "rms": 0.002487605973129795,
+          "peak": 0.06987893581390381,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 1853577,
+          "end": 2396221,
+          "rms": 0.003585275328305287,
+          "peak": 0.11643755435943604,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 2396221,
+          "end": 2980586,
+          "rms": 0.005792479955179925,
+          "peak": 0.16825902462005615,
+          "locked": false,
+          "rank": 5
+        },
+        {
+          "start": 2980586,
+          "end": 3565137,
+          "rms": 0.006035209053213142,
+          "peak": 0.17683923244476318,
+          "locked": false,
+          "rank": 6
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "7 CYMB StackShort 2 55 55 55.wav",
+      "expected": 7,
+      "group": "CYMB",
+      "family": "StackShort",
+      "mute_group": 2,
+      "base_pitch": 55,
+      "note_low": 55,
+      "note_high": 55,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 612758,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 110752,
+          "rms": 0.0007448177831718977,
+          "peak": 0.02074563503265381,
+          "locked": false,
+          "rank": 0
+        },
+        {
+          "start": 110752,
+          "end": 216283,
+          "rms": 0.0020677521739278955,
+          "peak": 0.0256270170211792,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 216283,
+          "end": 313534,
+          "rms": 0.004084609741650241,
+          "peak": 0.05593883991241455,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 313534,
+          "end": 393008,
+          "rms": 0.005893822638276319,
+          "peak": 0.09008526802062988,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 393008,
+          "end": 478648,
+          "rms": 0.014189620377283196,
+          "peak": 0.09110140800476074,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 478648,
+          "end": 559903,
+          "rms": 0.014896953272905014,
+          "peak": 0.09792149066925049,
+          "locked": false,
+          "rank": 5
+        },
+        {
+          "start": 559903,
+          "end": 612758,
+          "rms": 0.01794783200624896,
+          "peak": 0.12642645835876465,
+          "locked": false,
+          "rank": 6
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "filename": "9 AmbixSnare AmbixStick 0 37 37 37.wav",
+      "expected": 9,
+      "group": "AmbixSnare",
+      "family": "AmbixStick",
+      "mute_group": 0,
+      "base_pitch": 37,
+      "note_low": 37,
+      "note_high": 37,
+      "n_channels": 4,
+      "sample_rate": 44100,
+      "n_frames": 807726,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 96330,
+          "rms": 0.0038364045435812246,
+          "peak": 0.0279771089553833,
+          "locked": true,
+          "rank": 2
+        },
+        {
+          "start": 96330,
+          "end": 199000,
+          "rms": 0.0073039645372648615,
+          "peak": 0.04922628402709961,
+          "locked": true,
+          "rank": 3
+        },
+        {
+          "start": 199000,
+          "end": 297908,
+          "rms": 0.012691136487917956,
+          "peak": 0.08595311641693115,
+          "locked": true,
+          "rank": 8
+        },
+        {
+          "start": 297908,
+          "end": 387978,
+          "rms": 0.010677732521400047,
+          "peak": 0.06726431846618652,
+          "locked": true,
+          "rank": 7
+        },
+        {
+          "start": 387978,
+          "end": 481561,
+          "rms": 0.00910500207627331,
+          "peak": 0.06274926662445068,
+          "locked": true,
+          "rank": 4
+        },
+        {
+          "start": 481561,
+          "end": 569984,
+          "rms": 0.010615385236906966,
+          "peak": 0.07775771617889404,
+          "locked": true,
+          "rank": 6
+        },
+        {
+          "start": 569984,
+          "end": 662959,
+          "rms": 0.004973836870545988,
+          "peak": 0.032724976539611816,
+          "locked": true,
+          "rank": 1
+        },
+        {
+          "start": 662959,
+          "end": 752318,
+          "rms": 0.010132186120536192,
+          "peak": 0.06723248958587646,
+          "locked": true,
+          "rank": 5
+        },
+        {
+          "start": 752318,
+          "end": 807726,
+          "rms": 0.0013228117744043019,
+          "peak": 0.010306715965270996,
+          "locked": true,
+          "rank": 0
+        }
+      ],
+      "warnings": [
+        "9 locked start(s) kept from the state file",
+        "2 stroke(s) re-ranked from take reference"
+      ]
+    },
+    {
+      "filename": "9 ProxSnare ProxStick 0 37 37 37.wav",
+      "expected": 9,
+      "group": "ProxSnare",
+      "family": "ProxStick",
+      "mute_group": 0,
+      "base_pitch": 37,
+      "note_low": 37,
+      "note_high": 37,
+      "n_channels": 1,
+      "sample_rate": 44100,
+      "n_frames": 807726,
+      "starts_at_zero": true,
+      "hits": [
+        {
+          "start": 0,
+          "end": 96330,
+          "rms": 0.0020073873754455148,
+          "peak": 0.016029953956604004,
+          "locked": false,
+          "rank": 2
+        },
+        {
+          "start": 96330,
+          "end": 199000,
+          "rms": 0.0027147110070068585,
+          "peak": 0.02168452739715576,
+          "locked": false,
+          "rank": 3
+        },
+        {
+          "start": 199000,
+          "end": 297908,
+          "rms": 0.004758906607721147,
+          "peak": 0.03883051872253418,
+          "locked": false,
+          "rank": 8
+        },
+        {
+          "start": 297908,
+          "end": 387978,
+          "rms": 0.004465950247495333,
+          "peak": 0.03526949882507324,
+          "locked": false,
+          "rank": 7
+        },
+        {
+          "start": 387978,
+          "end": 481561,
+          "rms": 0.003734757128610608,
+          "peak": 0.02876293659210205,
+          "locked": false,
+          "rank": 4
+        },
+        {
+          "start": 481561,
+          "end": 569984,
+          "rms": 0.004065085176293926,
+          "peak": 0.02769780158996582,
+          "locked": false,
+          "rank": 6
+        },
+        {
+          "start": 569984,
+          "end": 662959,
+          "rms": 0.001987114889449876,
+          "peak": 0.014937281608581543,
+          "locked": false,
+          "rank": 1
+        },
+        {
+          "start": 662959,
+          "end": 752318,
+          "rms": 0.004033448328338043,
+          "peak": 0.03094780445098877,
+          "locked": false,
+          "rank": 5
+        },
+        {
+          "start": 752318,
+          "end": 807726,
+          "rms": 0.0005175202256490096,
+          "peak": 0.0043408870697021484,
+          "locked": false,
+          "rank": 0
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

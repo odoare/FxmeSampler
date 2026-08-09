@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Mappings>
+  <WelcomeTab text="Black Widow drums" img="BlackWidow_BlackBackground.png" />
+  <Master channels="29" img="logo686.png" color="0,220,255"/>
+
+  <Mixer>
+    <Strip type="ambisonicmono" name="Kick" img="white_kick.png" color="255,100,100"/>
+    <Strip type="ambisonicmono" name="Snare" img="white_snare.png" color="255,120,0"/>
+    <Strip type="ambisonicmono" name="Tom High" img="white_tomh.png" color="255,100,255"/>
+    <Strip type="ambisonicmono" name="Tom Low" img="white_toml.png" color="255,100,255"/>
+    <Strip type="ambisonic" name="Hi Hat" img="HH.jpg" color="255,255,100"/>
+    <Strip type="ambisonic" name="Cymbals" img="Cymb.jpg" color="255,255,100"/>
+    <Strip type="reverb" name="Room mics" img="Room.jpg" resource="Room IR1.wav,Room IR2.wav" color="80,255,80"/>
+    <Bus type="stereo" effectChain="Reverb" name="Reverb/Delay"
+          img="Room.jpg"
+          resource="Rectangular room small.wav,Rectangular room medium.wav,Rectangular room large.wav,Council Chamber.wav,Forest Short.wav,Forest Long.wav"
+          color="100,255,100"/>
+    <Bus type="stereo" name="Parallel bus"
+          img="tube.png"
+          color="100,255,100"/>
+  </Mixer>
+
+  <SampleGroup name="AmbixKick" channels="0:0, 1:1, 2:2, 3:3, 0:28" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="0" velHigh="11" sampleStart="0" sampleEnd="111121"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="12" velHigh="24" sampleStart="111121" sampleEnd="210031"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="25" velHigh="37" sampleStart="210031" sampleEnd="301935"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="38" velHigh="50" sampleStart="301935" sampleEnd="388583"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="51" velHigh="63" sampleStart="388583" sampleEnd="476680"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="64" velHigh="75" sampleStart="476680" sampleEnd="562652"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="76" velHigh="88" sampleStart="562652" sampleEnd="642471"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="89" velHigh="101" sampleStart="642471" sampleEnd="716721"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="102" velHigh="114" sampleStart="780322" sampleEnd="835579"/>
+  <Sound name="AmbixKick" group="AmbixKick" resource="10 AmbixKick AmbixKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="115" velHigh="127" sampleStart="716721" sampleEnd="780322"/>
+
+  <SampleGroup name="ProxKick" channels="0:4" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="0" velHigh="11" sampleStart="0" sampleEnd="110668"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="12" velHigh="24" sampleStart="110668" sampleEnd="209718"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="25" velHigh="37" sampleStart="209718" sampleEnd="301695"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="38" velHigh="50" sampleStart="301695" sampleEnd="388349"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="51" velHigh="63" sampleStart="388349" sampleEnd="476461"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="64" velHigh="75" sampleStart="476461" sampleEnd="562438"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="76" velHigh="88" sampleStart="562438" sampleEnd="642281"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="89" velHigh="101" sampleStart="642281" sampleEnd="716533"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="102" velHigh="114" sampleStart="780133" sampleEnd="835579"/>
+  <Sound name="ProxKick" group="ProxKick" resource="10 ProxKick ProxKick 0 36 36 36.wav" basePitch="36" noteLow="36" noteHigh="36" velLow="115" velHigh="127" sampleStart="716533" sampleEnd="780133"/>
+
+  <SampleGroup name="AmbixSnare" channels="0:5, 1:6, 2:7, 3:8, 0:28" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="0" velHigh="13" sampleStart="752454" sampleEnd="807726"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="14" velHigh="27" sampleStart="0" sampleEnd="96327"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="28" velHigh="41" sampleStart="570004" sampleEnd="662944"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="42" velHigh="55" sampleStart="96327" sampleEnd="199002"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="56" velHigh="70" sampleStart="387973" sampleEnd="481555"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="71" velHigh="84" sampleStart="662944" sampleEnd="752454"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="85" velHigh="98" sampleStart="481555" sampleEnd="570004"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="99" velHigh="112" sampleStart="297903" sampleEnd="387973"/>
+  <Sound name="AmbixStick" group="AmbixSnare" resource="9 AmbixSnare AmbixStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="113" velHigh="127" sampleStart="199002" sampleEnd="297903"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="0" velHigh="11" sampleStart="0" sampleEnd="69033"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="12" velHigh="24" sampleStart="69033" sampleEnd="137533"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="25" velHigh="37" sampleStart="137533" sampleEnd="209129"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="38" velHigh="50" sampleStart="209129" sampleEnd="280957"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="51" velHigh="63" sampleStart="280957" sampleEnd="348666"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="64" velHigh="75" sampleStart="609115" sampleEnd="668463"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="76" velHigh="88" sampleStart="480084" sampleEnd="545513"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="89" velHigh="101" sampleStart="348666" sampleEnd="413873"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="102" velHigh="114" sampleStart="545513" sampleEnd="609115"/>
+  <Sound name="AmbixSnareSide" group="AmbixSnare" resource="10 AmbixSnare AmbixSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="115" velHigh="127" sampleStart="413873" sampleEnd="480084"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="0" velHigh="5" sampleStart="919830" sampleEnd="991258"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="6" velHigh="11" sampleStart="0" sampleEnd="86763"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="12" velHigh="18" sampleStart="991258" sampleEnd="1064379"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="19" velHigh="24" sampleStart="86763" sampleEnd="175576"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="25" velHigh="31" sampleStart="1064379" sampleEnd="1137822"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="32" velHigh="37" sampleStart="175576" sampleEnd="262143"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="38" velHigh="43" sampleStart="1137822" sampleEnd="1208069"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="44" velHigh="50" sampleStart="262143" sampleEnd="340998"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="51" velHigh="56" sampleStart="340998" sampleEnd="423840"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="57" velHigh="63" sampleStart="1208069" sampleEnd="1277613"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="64" velHigh="69" sampleStart="1422807" sampleEnd="1476189"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="70" velHigh="75" sampleStart="854578" sampleEnd="919830"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="76" velHigh="82" sampleStart="423840" sampleEnd="500598"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="83" velHigh="88" sampleStart="1277613" sampleEnd="1352391"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="89" velHigh="95" sampleStart="500598" sampleEnd="573240"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="96" velHigh="101" sampleStart="1352391" sampleEnd="1422807"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="102" velHigh="107" sampleStart="573240" sampleEnd="646017"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="108" velHigh="114" sampleStart="785615" sampleEnd="854578"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="115" velHigh="120" sampleStart="716129" sampleEnd="785615"/>
+  <Sound name="AmbixSnareMiddle" group="AmbixSnare" resource="20 AmbixSnare AmbixSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="121" velHigh="127" sampleStart="646017" sampleEnd="716129"/>
+
+  <SampleGroup name="ProxSnare" channels="0:9" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="0" velHigh="13" sampleStart="752515" sampleEnd="807726"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="14" velHigh="27" sampleStart="569944" sampleEnd="662834"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="28" velHigh="41" sampleStart="0" sampleEnd="96233"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="42" velHigh="55" sampleStart="96233" sampleEnd="198886"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="56" velHigh="70" sampleStart="387867" sampleEnd="481479"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="71" velHigh="84" sampleStart="662834" sampleEnd="752515"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="85" velHigh="98" sampleStart="481479" sampleEnd="569944"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="99" velHigh="112" sampleStart="297790" sampleEnd="387867"/>
+  <Sound name="ProxStick" group="ProxSnare" resource="9 ProxSnare ProxStick 0 37 37 37.wav" basePitch="37" noteLow="37" noteHigh="37" velLow="113" velHigh="127" sampleStart="198886" sampleEnd="297790"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="0" velHigh="5" sampleStart="919048" sampleEnd="990988"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="6" velHigh="11" sampleStart="0" sampleEnd="86522"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="12" velHigh="18" sampleStart="990988" sampleEnd="1064156"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="19" velHigh="24" sampleStart="86522" sampleEnd="175382"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="25" velHigh="31" sampleStart="1064156" sampleEnd="1137666"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="32" velHigh="37" sampleStart="175382" sampleEnd="261987"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="38" velHigh="43" sampleStart="1137666" sampleEnd="1207923"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="44" velHigh="50" sampleStart="261987" sampleEnd="340854"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="51" velHigh="56" sampleStart="340854" sampleEnd="423700"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="57" velHigh="63" sampleStart="1207923" sampleEnd="1277474"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="64" velHigh="69" sampleStart="423700" sampleEnd="500459"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="70" velHigh="75" sampleStart="1277474" sampleEnd="1352254"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="76" velHigh="82" sampleStart="500459" sampleEnd="573008"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="83" velHigh="88" sampleStart="573008" sampleEnd="645783"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="89" velHigh="95" sampleStart="715888" sampleEnd="785373"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="96" velHigh="101" sampleStart="785373" sampleEnd="854392"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="102" velHigh="107" sampleStart="1422615" sampleEnd="1476189"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="108" velHigh="114" sampleStart="645783" sampleEnd="715888"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="115" velHigh="120" sampleStart="1352254" sampleEnd="1422615"/>
+  <Sound name="ProxSnareMiddle" group="ProxSnare" resource="20 ProxSnare ProxSnareMiddle 0 38 38 38.wav" basePitch="38" noteLow="38" noteHigh="38" velLow="121" velHigh="127" sampleStart="854392" sampleEnd="919048"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="0" velHigh="11" sampleStart="0" sampleEnd="68753"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="12" velHigh="24" sampleStart="68753" sampleEnd="137373"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="25" velHigh="37" sampleStart="137373" sampleEnd="208991"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="38" velHigh="50" sampleStart="208991" sampleEnd="280822"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="51" velHigh="63" sampleStart="280822" sampleEnd="348534"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="64" velHigh="75" sampleStart="348534" sampleEnd="413739"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="76" velHigh="88" sampleStart="413739" sampleEnd="479955"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="89" velHigh="101" sampleStart="479955" sampleEnd="545381"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="102" velHigh="114" sampleStart="608985" sampleEnd="668463"/>
+  <Sound name="ProxSnareSide" group="ProxSnare" resource="10 ProxSnare ProxSnareSide 0 39 39 39.wav" basePitch="39" noteLow="39" noteHigh="39" velLow="115" velHigh="127" sampleStart="545381" sampleEnd="608985"/>
+
+  <SampleGroup name="AmbixTomH" channels="0:10, 1:11, 2:12, 3:13, 0:28" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="0" velHigh="7" sampleStart="0" sampleEnd="112827"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="8" velHigh="15" sampleStart="807889" sampleEnd="919205"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="16" velHigh="23" sampleStart="112827" sampleEnd="232194"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="24" velHigh="31" sampleStart="919205" sampleEnd="1039360"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="32" velHigh="39" sampleStart="232194" sampleEnd="339925"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="40" velHigh="47" sampleStart="1344934" sampleEnd="1433345"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="48" velHigh="55" sampleStart="339925" sampleEnd="439161"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="56" velHigh="63" sampleStart="1039360" sampleEnd="1156260"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="64" velHigh="71" sampleStart="1156260" sampleEnd="1256399"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="72" velHigh="79" sampleStart="1256399" sampleEnd="1344934"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="80" velHigh="87" sampleStart="439161" sampleEnd="523093"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="88" velHigh="95" sampleStart="1433345" sampleEnd="1522682"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="96" velHigh="103" sampleStart="1522682" sampleEnd="1643305"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="104" velHigh="111" sampleStart="708534" sampleEnd="807889"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="112" velHigh="119" sampleStart="523093" sampleEnd="623396"/>
+  <Sound name="AmbixTomH" group="AmbixTomH" resource="16 AmbixTomH AmbixTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="120" velHigh="127" sampleStart="623396" sampleEnd="708534"/>
+  
+  <SampleGroup name="ProxTomH" channels="0:14" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="0" velHigh="7" sampleStart="0" sampleEnd="112709"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="8" velHigh="15" sampleStart="807827" sampleEnd="919086"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="16" velHigh="23" sampleStart="112709" sampleEnd="232068"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="24" velHigh="31" sampleStart="919086" sampleEnd="1039297"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="32" velHigh="39" sampleStart="232068" sampleEnd="339796"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="40" velHigh="47" sampleStart="339796" sampleEnd="439187"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="48" velHigh="55" sampleStart="1344946" sampleEnd="1433341"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="56" velHigh="63" sampleStart="1039297" sampleEnd="1156216"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="64" velHigh="71" sampleStart="1156216" sampleEnd="1256369"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="72" velHigh="79" sampleStart="1256369" sampleEnd="1344946"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="80" velHigh="87" sampleStart="439187" sampleEnd="523142"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="88" velHigh="95" sampleStart="1522756" sampleEnd="1643305"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="96" velHigh="103" sampleStart="1433341" sampleEnd="1522756"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="104" velHigh="111" sampleStart="708604" sampleEnd="807827"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="112" velHigh="119" sampleStart="523142" sampleEnd="623387"/>
+  <Sound name="ProxTomH" group="ProxTomH" resource="16 ProxTomH ProxTomH 0 47 47 47.wav" basePitch="47" noteLow="47" noteHigh="47" velLow="120" velHigh="127" sampleStart="623387" sampleEnd="708604"/>
+
+  <SampleGroup name="AmbixTomL" channels="0:15, 1:16, 2:17, 3:18, 0:28" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="0" velHigh="7" sampleStart="0" sampleEnd="112644"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="8" velHigh="16" sampleStart="835656" sampleEnd="946225"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="17" velHigh="24" sampleStart="112644" sampleEnd="238868"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="25" velHigh="33" sampleStart="946225" sampleEnd="1053716"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="34" velHigh="41" sampleStart="238868" sampleEnd="359516"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="42" velHigh="50" sampleStart="1053716" sampleEnd="1158124"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="51" velHigh="58" sampleStart="359516" sampleEnd="463109"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="59" velHigh="67" sampleStart="463109" sampleEnd="560608"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="68" velHigh="75" sampleStart="560608" sampleEnd="651823"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="76" velHigh="84" sampleStart="1158124" sampleEnd="1252479"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="85" velHigh="92" sampleStart="1252479" sampleEnd="1341120"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="93" velHigh="101" sampleStart="1341120" sampleEnd="1442897"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="102" velHigh="109" sampleStart="651823" sampleEnd="742607"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="110" velHigh="118" sampleStart="742607" sampleEnd="835656"/>
+  <Sound name="AmbixTomL" group="AmbixTomL" resource="15 AmbixTomL AmbixTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="119" velHigh="127" sampleStart="1442897" sampleEnd="1559747"/>
+
+  <SampleGroup name="ProxTomL" channels="0:19" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="0" velHigh="7" sampleStart="0" sampleEnd="112502"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="8" velHigh="16" sampleStart="835522" sampleEnd="946081"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="17" velHigh="24" sampleStart="112502" sampleEnd="238723"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="25" velHigh="33" sampleStart="946081" sampleEnd="1053659"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="34" velHigh="41" sampleStart="238723" sampleEnd="359452"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="42" velHigh="50" sampleStart="1053659" sampleEnd="1158166"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="51" velHigh="58" sampleStart="359452" sampleEnd="463164"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="59" velHigh="67" sampleStart="463164" sampleEnd="560593"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="68" velHigh="75" sampleStart="560593" sampleEnd="651971"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="76" velHigh="84" sampleStart="1158166" sampleEnd="1252587"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="85" velHigh="92" sampleStart="1252587" sampleEnd="1341247"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="93" velHigh="101" sampleStart="1341247" sampleEnd="1442983"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="102" velHigh="109" sampleStart="651971" sampleEnd="742761"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="110" velHigh="118" sampleStart="742761" sampleEnd="835522"/>
+  <Sound name="ProxTomL" group="ProxTomL" resource="15 ProxTomL ProxTomL 0 45 45 45.wav" basePitch="45" noteLow="45" noteHigh="45" velLow="119" velHigh="127" sampleStart="1442983" sampleEnd="1559747"/>
+
+  <SampleGroup name="HH" channels="0:20, 1:21, 2:22, 3:23, 0:28" muteGroup="1" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="HHf" group="HH" resource="3 HH HHf 1 44 44 44.wav" basePitch="44" noteLow="44" noteHigh="44" velLow="0" velHigh="41" sampleStart="0" sampleEnd="55843"/>
+  <Sound name="HHf" group="HH" resource="3 HH HHf 1 44 44 44.wav" basePitch="44" noteLow="44" noteHigh="44" velLow="42" velHigh="84" sampleStart="55843" sampleEnd="111587"/>
+  <Sound name="HHf" group="HH" resource="3 HH HHf 1 44 44 44.wav" basePitch="44" noteLow="44" noteHigh="44" velLow="85" velHigh="127" sampleStart="111587" sampleEnd="167116"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="0" velHigh="6" sampleStart="422076" sampleEnd="482239"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="7" velHigh="13" sampleStart="0" sampleEnd="50141"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="14" velHigh="20" sampleStart="482239" sampleEnd="540876"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="21" velHigh="27" sampleStart="50141" sampleEnd="103138"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="28" velHigh="34" sampleStart="540876" sampleEnd="596417"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="35" velHigh="41" sampleStart="103138" sampleEnd="157325"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="42" velHigh="48" sampleStart="596417" sampleEnd="653340"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="49" velHigh="55" sampleStart="653340" sampleEnd="707151"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="56" velHigh="63" sampleStart="157325" sampleEnd="209338"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="64" velHigh="70" sampleStart="261560" sampleEnd="313214"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="71" velHigh="77" sampleStart="209338" sampleEnd="261560"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="78" velHigh="84" sampleStart="707151" sampleEnd="761841"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="85" velHigh="91" sampleStart="761841" sampleEnd="815410"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="92" velHigh="98" sampleStart="920470" sampleEnd="974842"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="99" velHigh="105" sampleStart="815410" sampleEnd="868800"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="106" velHigh="112" sampleStart="868800" sampleEnd="920470"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="113" velHigh="119" sampleStart="367736" sampleEnd="422076"/>
+  <Sound name="HHC1" group="HH" resource="18 HH HHC1 1 42 42 42.wav" basePitch="42" noteLow="42" noteHigh="42" velLow="120" velHigh="127" sampleStart="313214" sampleEnd="367736"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="0" velHigh="9" sampleStart="0" sampleEnd="44986"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="10" velHigh="20" sampleStart="44986" sampleEnd="90955"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="21" velHigh="31" sampleStart="90955" sampleEnd="138215"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="32" velHigh="41" sampleStart="138215" sampleEnd="184965"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="42" velHigh="52" sampleStart="277155" sampleEnd="324241"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="53" velHigh="63" sampleStart="230744" sampleEnd="277155"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="64" velHigh="73" sampleStart="184965" sampleEnd="230744"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="74" velHigh="84" sampleStart="370966" sampleEnd="417058"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="85" velHigh="95" sampleStart="324241" sampleEnd="370966"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="96" velHigh="105" sampleStart="417058" sampleEnd="462991"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="106" velHigh="116" sampleStart="462991" sampleEnd="510376"/>
+  <Sound name="HHC2" group="HH" resource="12 HH HHC2 1 43 43 43.wav" basePitch="43" noteLow="43" noteHigh="43" velLow="117" velHigh="127" sampleStart="510376" sampleEnd="557053"/>
+  <Sound name="HHO" group="HH" resource="3 HH HHO 1 46 46 46.wav" basePitch="46" noteLow="46" noteHigh="46" velLow="0" velHigh="41" sampleStart="0" sampleEnd="391619"/>
+  <Sound name="HHO" group="HH" resource="3 HH HHO 1 46 46 46.wav" basePitch="46" noteLow="46" noteHigh="46" velLow="42" velHigh="84" sampleStart="391619" sampleEnd="756014"/>
+  <Sound name="HHO" group="HH" resource="3 HH HHO 1 46 46 46.wav" basePitch="46" noteLow="46" noteHigh="46" velLow="85" velHigh="127" sampleStart="756014" sampleEnd="1169811"/>
+
+  <SampleGroup name="CYMB" channels="0:24, 1:25, 2:26, 3:27, 0:28" muteGroup="0" oneShot="true" attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="CRASH10" group="CYMB" resource="4 CYMB CRASH10 0 49 49 49.wav" basePitch="52" noteLow="52" noteHigh="52" velLow="0" velHigh="31" sampleStart="0" sampleEnd="255576"/>
+  <Sound name="CRASH10" group="CYMB" resource="4 CYMB CRASH10 0 49 49 49.wav" basePitch="52" noteLow="52" noteHigh="52" velLow="32" velHigh="63" sampleStart="255576" sampleEnd="624394"/>
+  <Sound name="CRASH10" group="CYMB" resource="4 CYMB CRASH10 0 49 49 49.wav" basePitch="52" noteLow="52" noteHigh="52" velLow="64" velHigh="95" sampleStart="624394" sampleEnd="737852"/>
+  <Sound name="CRASH10" group="CYMB" resource="4 CYMB CRASH10 0 49 49 49.wav" basePitch="52" noteLow="52" noteHigh="52" velLow="96" velHigh="127" sampleStart="1070125" sampleEnd="1448337"/>
+
+  <Sound name="CRASH18" group="CYMB" resource="3 CYMB CRASH18 0 49 49 49.wav" basePitch="49" noteLow="49" noteHigh="49" velLow="0" velHigh="41" sampleStart="0" sampleEnd="943982"/>
+  <Sound name="CRASH18" group="CYMB" resource="3 CYMB CRASH18 0 49 49 49.wav" basePitch="49" noteLow="49" noteHigh="49" velLow="42" velHigh="84" sampleStart="943983" sampleEnd="1917055"/>
+  <Sound name="CRASH18" group="CYMB" resource="3 CYMB CRASH18 0 49 49 49.wav" basePitch="49" noteLow="49" noteHigh="49" velLow="85" velHigh="127" sampleStart="1917056" sampleEnd="2720000"/>
+
+  <Sound name="StackShort" group="CYMB" resource="7 CYMB StackShort 2 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="0" velHigh="17" sampleStart="0" sampleEnd="110623"/>
+  <Sound name="StackShort" group="CYMB" resource="7 CYMB StackShort 2 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="18" velHigh="35" sampleStart="110623" sampleEnd="216156"/>
+  <Sound name="StackShort" group="CYMB" resource="7 CYMB StackShort 2 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="36" velHigh="53" sampleStart="216156" sampleEnd="313407"/>
+  <Sound name="StackShort" group="CYMB" resource="7 CYMB StackShort 2 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="54" velHigh="72" sampleStart="313407" sampleEnd="392873"/>
+  <Sound name="StackShort" group="CYMB" resource="7 CYMB StackShort 2 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="73" velHigh="90" sampleStart="392873" sampleEnd="478511"/>
+  <Sound name="StackShort" group="CYMB" resource="7 CYMB StackShort 2 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="91" velHigh="108" sampleStart="478511" sampleEnd="559766"/>
+  <Sound name="StackShort" group="CYMB" resource="7 CYMB StackShort 2 55 55 55.wav" basePitch="55" noteLow="55" noteHigh="55" velLow="109" velHigh="127" sampleStart="559766" sampleEnd="612758"/>
+  <Sound name="StackLong" group="CYMB" resource="4 CYMB StackLong 2 54 54 54.wav" basePitch="54" noteLow="54" noteHigh="54" velLow="0" velHigh="31" sampleStart="0" sampleEnd="54691"/>
+  <Sound name="StackLong" group="CYMB" resource="4 CYMB StackLong 2 54 54 54.wav" basePitch="54" noteLow="54" noteHigh="54" velLow="32" velHigh="63" sampleStart="54691" sampleEnd="97073"/>
+  <Sound name="StackLong" group="CYMB" resource="4 CYMB StackLong 2 54 54 54.wav" basePitch="54" noteLow="54" noteHigh="54" velLow="64" velHigh="95" sampleStart="156764" sampleEnd="220713"/>
+  <Sound name="StackLong" group="CYMB" resource="4 CYMB StackLong 2 54 54 54.wav" basePitch="54" noteLow="54" noteHigh="54" velLow="96" velHigh="127" sampleStart="97073" sampleEnd="156764"/>
+  <Sound name="Ride1" group="CYMB" resource="7 CYMB Ride1 0 51 51 51.wav" basePitch="51" noteLow="51" noteHigh="51" velLow="0" velHigh="17" sampleStart="0" sampleEnd="466438"/>
+  <Sound name="Ride1" group="CYMB" resource="7 CYMB Ride1 0 51 51 51.wav" basePitch="51" noteLow="51" noteHigh="51" velLow="18" velHigh="35" sampleStart="466438" sampleEnd="964790"/>
+  <Sound name="Ride1" group="CYMB" resource="7 CYMB Ride1 0 51 51 51.wav" basePitch="51" noteLow="51" noteHigh="51" velLow="36" velHigh="53" sampleStart="964790" sampleEnd="1395906"/>
+  <Sound name="Ride1" group="CYMB" resource="7 CYMB Ride1 0 51 51 51.wav" basePitch="51" noteLow="51" noteHigh="51" velLow="54" velHigh="72" sampleStart="1395906" sampleEnd="1853441"/>
+  <Sound name="Ride1" group="CYMB" resource="7 CYMB Ride1 0 51 51 51.wav" basePitch="51" noteLow="51" noteHigh="51" velLow="73" velHigh="90" sampleStart="1853441" sampleEnd="2396084"/>
+  <Sound name="Ride1" group="CYMB" resource="7 CYMB Ride1 0 51 51 51.wav" basePitch="51" noteLow="51" noteHigh="51" velLow="91" velHigh="108" sampleStart="2396084" sampleEnd="2980450"/>
+  <Sound name="Ride1" group="CYMB" resource="7 CYMB Ride1 0 51 51 51.wav" basePitch="51" noteLow="51" noteHigh="51" velLow="109" velHigh="127" sampleStart="2980450" sampleEnd="3565137"/>
+
+  <Sound name="CRASH16" group="CYMB" resource="4 CYMB CRASH16 0 57 57 57.wav" basePitch="57" noteLow="57" noteHigh="57" velLow="0" velHigh="31" sampleStart="0" sampleEnd="607375"/>
+  <Sound name="CRASH16" group="CYMB" resource="4 CYMB CRASH16 0 57 57 57.wav" basePitch="57" noteLow="57" noteHigh="57" velLow="32" velHigh="63" sampleStart="607375" sampleEnd="1258650"/>
+  <Sound name="CRASH16" group="CYMB" resource="4 CYMB CRASH16 0 57 57 57.wav" basePitch="57" noteLow="57" noteHigh="57" velLow="64" velHigh="95" sampleStart="1258650" sampleEnd="2014680"/>
+  <Sound name="CRASH16" group="CYMB" resource="4 CYMB CRASH16 0 57 57 57.wav" basePitch="57" noteLow="57" noteHigh="57" velLow="96" velHigh="127" sampleStart="2014680" sampleEnd="2450076"/>
+
+  <Sound name="Ride2" group="CYMB" resource="6 CYMB Ride2 0 50 50 50.wav" basePitch="50" noteLow="50" noteHigh="50" velLow="0" velHigh="20" sampleStart="0" sampleEnd="455195"/>
+  <Sound name="Ride2" group="CYMB" resource="6 CYMB Ride2 0 50 50 50.wav" basePitch="50" noteLow="50" noteHigh="50" velLow="21" velHigh="41" sampleStart="455195" sampleEnd="867529"/>
+  <Sound name="Ride2" group="CYMB" resource="6 CYMB Ride2 0 50 50 50.wav" basePitch="50" noteLow="50" noteHigh="50" velLow="42" velHigh="63" sampleStart="867529" sampleEnd="1279301"/>
+  <Sound name="Ride2" group="CYMB" resource="6 CYMB Ride2 0 50 50 50.wav" basePitch="50" noteLow="50" noteHigh="50" velLow="64" velHigh="84" sampleStart="1279301" sampleEnd="1686133"/>
+  <Sound name="Ride2" group="CYMB" resource="6 CYMB Ride2 0 50 50 50.wav" basePitch="50" noteLow="50" noteHigh="50" velLow="85" velHigh="105" sampleStart="1686133" sampleEnd="2345906"/>
+  <Sound name="Ride2" group="CYMB" resource="6 CYMB Ride2 0 50 50 50.wav" basePitch="50" noteLow="50" noteHigh="50" velLow="106" velHigh="127" sampleStart="2345906" sampleEnd="2952379"/>
+  <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="0" velHigh="20" sampleStart="0" sampleEnd="323746"/>
+  <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="21" velHigh="41" sampleStart="1543768" sampleEnd="1963390"/>
+  <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="42" velHigh="63" sampleStart="323746" sampleEnd="672583"/>
+  <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="64" velHigh="84" sampleStart="672583" sampleEnd="1060137"/>
+  <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="85" velHigh="105" sampleStart="1963390" sampleEnd="2228211"/>
+  <Sound name="RideBell" group="CYMB" resource="6 CYMB RideBell 0 53 53 53.wav" basePitch="53" noteLow="53" noteHigh="53" velLow="106" velHigh="127" sampleStart="1060137" sampleEnd="1543768"/>
+
+</Mappings>

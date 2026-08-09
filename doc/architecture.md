@@ -206,7 +206,7 @@ in declaration order and the manager takes a reference to the state.
 Factory presets are the XML files under each kit's preset directory, embedded in
 BinaryData. The manager keeps every embedded *_xml resource whose root tag
 matches the APVTS state type, which is Parameters, so mapping_xml (root
-Mappings) is skipped without needing to be special-cased.
+Mapping) is skipped without needing to be special-cased.
 
 User presets are files under
 

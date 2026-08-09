@@ -339,7 +339,9 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
     juce::XmlDocument doc (juce::String::createStringFromData (xmlData, xmlSize));
     auto root = doc.getDocumentElement();
 
-    if (root == nullptr || ! root->hasTagName ("Mappings"))
+    // The root tag is <Mapping>, matching the file name. <Mappings> is the
+    // older spelling and is still accepted so an unconverted kit keeps loading.
+    if (root == nullptr || ! (root->hasTagName ("Mapping") || root->hasTagName ("Mappings")))
         return;
 
     sampleCache.clear(); // Clear cache when loading new mapping
