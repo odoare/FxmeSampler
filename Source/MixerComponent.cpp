@@ -112,6 +112,38 @@ void MixerComponent::paint (juce::Graphics& g)
     fxsampler::theme::paintPanelBackground (g, getLocalBounds(), fxsampler::theme::background);
 }
 
+void MixerComponent::paintOverChildren (juce::Graphics& g)
+{
+    auto& bar = tabs.getTabbedButtonBar();
+
+    // Where the tabs actually end. JUCE lays each one out at its natural width
+    // and never stretches them to fill the bar, so there is normally room to
+    // spare. Only visible tabs count: once they stop fitting, the overflow is
+    // hidden behind a chevron at the far right and the hidden buttons keep
+    // bounds that run off the end of the bar.
+    int tabsEnd = 0;
+    for (int i = 0; i < bar.getNumTabs(); ++i)
+        if (auto* tab = bar.getTabButton (i))
+            if (tab->isVisible())
+                tabsEnd = juce::jmax (tabsEnd, tab->getRight());
+
+    const juce::Rectangle<int> freeInBar (tabsEnd, 0,
+                                          bar.getWidth() - tabsEnd, bar.getHeight());
+    auto area = getLocalArea (&bar, freeInBar).reduced (10, 0);
+
+    // Too tight to be worth it, or the chevron is sitting there. The tabs and
+    // the overflow control both matter more than the version does.
+
+    if (area.getWidth() < 90)
+        return;
+
+    // Same treatment as fxmefx::TopBar, so the suite reads consistently.
+    g.setColour (juce::Colours::lightgrey);
+    g.setFont (juce::Font (juce::FontOptions (11.0f)));
+    g.drawText ("v" JucePlugin_VersionString "  -  FX-Mechanics",
+                area, juce::Justification::centredRight);
+}
+
 void MixerComponent::resized()
 {
     tabs.setBounds (getLocalBounds());

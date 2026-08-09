@@ -32,6 +32,13 @@ public:
     ~MixerComponent() override;
 
     void paint (juce::Graphics&) override;
+
+    /** Draws the version in the tab bar's empty right-hand end. It has to be
+        here rather than in paint(): the TabbedComponent covers the whole
+        component and paints its own bar background over anything drawn
+        underneath it. */
+    void paintOverChildren (juce::Graphics&) override;
+
     void resized() override;
 
 private:
