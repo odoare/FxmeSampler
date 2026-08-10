@@ -222,6 +222,25 @@ private:
     enum class State { Attack, Decay, Sustain, Release, Idle };
     State state = State::Idle;
 
+    /** True when this voice should wrap at the loop points rather than run to
+        sampleEnd. Looping is a group setting and a one-shot never loops. */
+    bool isLoopingNow() const;
+
+    /** Linearly interpolated read at a fractional position, returning silence
+        outside the buffer. With wrapAtLoop, the sample following loopEnd - 1 is
+        loopStart, so the interpolation across the seam is continuous.
+
+        Kept separate because the crossfade reads two positions per sample. */
+    float readInterpolated (const juce::AudioBuffer<float>& source, int channel,
+                            double position, bool wrapAtLoop) const;
+
+    /** Advances the ADSR by one sample. Returns false when the voice has ended,
+        in which case it has already been stopped. */
+    bool advanceEnvelope();
+
+    /** Advances the read position by one output sample, wrapping at the loop. */
+    void advancePosition (bool isLooping);
+
     const Sound* activeSound = nullptr;
     int currentNote = 0;
 

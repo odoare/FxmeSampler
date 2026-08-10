@@ -167,27 +167,108 @@ bool Voice::isActive() const
     return state != State::Idle;
 }
 
+bool Voice::isLoopingNow() const
+{
+    // A one-shot ignores the loop points entirely. Looping is a group setting;
+    // a sound with no group can never loop.
+    if (activeSound == nullptr || activeSound->group == nullptr)
+        return false;
+    if (activeSound->group->isOneShot)
+        return false;
+    return activeSound->group->isLoop;
+}
+
+float Voice::readInterpolated (const juce::AudioBuffer<float>& source, int channel,
+                               double position, bool wrapAtLoop) const
+{
+    const int pos = (int) position;
+
+    if (pos < 0 || pos >= source.getNumSamples())
+        return 0.0f;
+
+    const float s0 = source.getSample (channel, pos);
+    float s1 = 0.0f;
+
+    // loopEnd is exclusive, like sampleEnd: the last sample of the loop is
+    // loopEnd - 1, and the one after it is loopStart.
+    if (wrapAtLoop && pos + 1 >= activeSound->loopEnd)
+        s1 = source.getSample (channel, activeSound->loopStart);
+    else if (pos + 1 < source.getNumSamples())
+        s1 = source.getSample (channel, pos + 1);
+
+    return s0 + (float) (position - pos) * (s1 - s0);
+}
+
+bool Voice::advanceEnvelope()
+{
+    if (state == State::Attack)
+    {
+        envelopeVal += (float) attackRate;
+        if (envelopeVal >= 1.0f)
+        {
+            envelopeVal = 1.0f;
+            state = State::Decay;
+        }
+    }
+    else if (state == State::Decay)
+    {
+        envelopeVal -= (float) decayRate;
+        if (envelopeVal <= (float) sustainLevel)
+        {
+            envelopeVal = (float) sustainLevel;
+            state = State::Sustain;
+        }
+    }
+    else if (state == State::Sustain)
+    {
+        if (envelopeVal <= 0.0001f) // Optimization for silence
+        {
+            stop();
+            return false;
+        }
+    }
+    else if (state == State::Release)
+    {
+        envelopeVal -= (float) releaseRate;
+        if (envelopeVal <= 0.0f)
+        {
+            envelopeVal = 0.0f;
+            stop();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Voice::advancePosition (bool isLooping)
+{
+    currentPosition += increment;
+
+    if (! isLooping || currentPosition < (double) activeSound->loopEnd)
+        return;
+
+    const double loopLen = (double) activeSound->loopEnd - (double) activeSound->loopStart;
+    const double over = currentPosition - (double) activeSound->loopEnd;
+
+    if (loopLen > 0.0)
+        currentPosition = (double) activeSound->loopStart + std::fmod (over, loopLen);
+    else
+        currentPosition = (double) activeSound->loopStart;
+}
+
 void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
     if (state == State::Idle || activeSound == nullptr || activeSound->audioBuffer == nullptr)
         return;
 
     const auto& sourceBuffer = *activeSound->audioBuffer;
-    int numSourceChannels = sourceBuffer.getNumChannels();
-    int numOutputChannels = outputBuffer.getNumChannels();
+    const int numSourceChannels = sourceBuffer.getNumChannels();
+    const int numOutputChannels = outputBuffer.getNumChannels();
     const auto& targetChannels = activeSound->outputChannels;
 
-    bool isLooping = false;
-    if (activeSound->group) isLooping = activeSound->group->isLoop;
-    
-    bool isOneShot = activeSound->isOneShot;
-    if (activeSound->group)
-    {
-        isOneShot = activeSound->group->isOneShot;
-    }
+    const bool isLooping = isLoopingNow();
 
-    if (isOneShot) isLooping = false;
-    
     for (int s = 0; s < numSamples; ++s)
     {
         // Silence still owed by a positive start offset. The envelope is held
@@ -207,94 +288,37 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
             continue;
         }
 
-        // Envelope processing
-        if (state == State::Attack)
-        {
-            envelopeVal += (float) attackRate;
-            if (envelopeVal >= 1.0f)
-            {
-                envelopeVal = 1.0f;
-                state = State::Decay;
-            }
-        }
-        else if (state == State::Decay)
-        {
-            envelopeVal -= (float) decayRate;
-            if (envelopeVal <= (float) sustainLevel)
-            {
-                envelopeVal = (float) sustainLevel;
-                state = State::Sustain;
-            }
-        }
-        else if (state == State::Sustain)
-        {
-            if (envelopeVal <= 0.0001f) // Optimization for silence
-            {
-                stop();
-                return;
-            }
-        }
-        else if (state == State::Release)
-        {
-            envelopeVal -= (float) releaseRate;
-            if (envelopeVal <= 0.0f)
-            {
-                envelopeVal = 0.0f;
-                stop();
-                return;
-            }
-        }
+        if (! advanceEnvelope())
+            return;
 
-        // Sample playback
-        int pos = (int) currentPosition;
-        float alpha = (float) (currentPosition - pos);
-
-        if (!isLooping && pos >= activeSound->sampleEnd)
+        if (! isLooping && (int) currentPosition >= activeSound->sampleEnd)
         {
             stop();
             return;
         }
 
-        for (size_t i = 0; i + 1 < targetChannels.size(); i += 2)
+        // Hoisted out of the channel loop: it does not depend on the channel,
+        // and skipping the whole loop leaves the output buffer untouched rather
+        // than adding silence to it.
+        const int pos = (int) currentPosition;
+
+        if (pos >= 0 && pos < sourceBuffer.getNumSamples())
         {
-            int srcCh = targetChannels[i];
-            int outCh = targetChannels[i + 1];
-
-            if (outCh >= 0 && outCh < numOutputChannels && srcCh >= 0 && srcCh < numSourceChannels && pos >= 0 && pos < sourceBuffer.getNumSamples())
+            for (size_t i = 0; i + 1 < targetChannels.size(); i += 2)
             {
-                float sample = sourceBuffer.getSample (srcCh, pos);
-                
-                float nextSample = 0.0f;
-                // loopEnd is exclusive, like sampleEnd: the last sample of the
-                // loop is loopEnd - 1, and the one after it is loopStart.
-                if (isLooping && pos + 1 >= activeSound->loopEnd)
-                {
-                    nextSample = sourceBuffer.getSample (srcCh, activeSound->loopStart);
-                }
-                else if (pos + 1 < sourceBuffer.getNumSamples())
-                {
-                    nextSample = sourceBuffer.getSample (srcCh, pos + 1);
-                }
-                float interpolated = sample + alpha * (nextSample - sample);
+                const int srcCh = targetChannels[i];
+                const int outCh = targetChannels[i + 1];
 
-                outputBuffer.addSample (outCh, startSample + s, interpolated * envelopeVal * currentVelocity);
+                if (outCh < 0 || outCh >= numOutputChannels
+                    || srcCh < 0 || srcCh >= numSourceChannels)
+                    continue;
+
+                const float sample = readInterpolated (sourceBuffer, srcCh, currentPosition, isLooping);
+                outputBuffer.addSample (outCh, startSample + s, sample * envelopeVal * currentVelocity);
             }
         }
 
-        currentPosition += increment;
-        
-        if (isLooping)
-        {
-            if (currentPosition >= (double)activeSound->loopEnd) // Passed the end of the loop
-            {
-                double loopLen = (double)activeSound->loopEnd - (double)activeSound->loopStart;
-                double over = currentPosition - (double)activeSound->loopEnd;
-                if (loopLen > 0.0)
-                    currentPosition = (double)activeSound->loopStart + std::fmod(over, loopLen);
-                else
-                    currentPosition = (double)activeSound->loopStart;
-            }
-        }
+        advancePosition (isLooping);
     }
 }
 
