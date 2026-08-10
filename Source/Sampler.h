@@ -34,6 +34,19 @@ struct SampleGroup
     double randomDetune = 0.0;
     double groupLevel = 0.0;
     double minVelocityGain = -40.0;
+
+    /** Playback start offset in milliseconds, -10 to +10.
+
+        Positive holds the voice silent for that long before the sample starts,
+        so the group sits later in time. Negative throws away that much of the
+        head of the sample instead, so it sits earlier. Zero is the mapping's
+        own sampleStart.
+
+        Meant for sliding a close mic against an ambient one: the two are the
+        same performance a metre or so apart, so a millisecond either way is
+        the difference between reinforcement and cancellation. */
+    double startOffset = 0.0;
+
     std::vector<int> outputChannels;
 
     // Parameter pointers
@@ -47,6 +60,7 @@ struct SampleGroup
     std::atomic<float>* randomDetuneParam = nullptr;
     std::atomic<float>* groupLevelParam = nullptr;
     std::atomic<float>* minVelocityGainParam = nullptr;
+    std::atomic<float>* startOffsetParam = nullptr;
 
     /**
      * @brief Gets the name of the sample group.
@@ -157,6 +171,13 @@ private:
 
     const Sound* activeSound = nullptr;
     int currentNote = 0;
+
+    /** Output samples of silence still owed before the sample starts, from a
+        positive SampleGroup::startOffset. Counted in output samples rather
+        than source samples so the delay is the requested wall-clock time
+        whatever the playback increment is doing. */
+    int delaySamplesRemaining = 0;
+
     double currentPosition = 0.0;
     double increment = 1.0;
     double currentSampleRate = 44100.0;

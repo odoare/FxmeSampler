@@ -57,6 +57,7 @@ void Voice::start (const Sound* sound, int note, float velocity, double sampleRa
     activeSound = sound;
     currentNote = note;
     currentPosition = (sound ? (double)sound->sampleStart : 0.0);
+    delaySamplesRemaining = 0;
     currentVelocity = velocity;
     currentSampleRate = sampleRate;
     
@@ -91,6 +92,34 @@ void Voice::start (const Sound* sound, int note, float velocity, double sampleRa
             currentVelocity = (minGain + (1.0f - minGain) * velocity) * juce::Decibels::decibelsToGain (g->groupLevel);
         }
 
+        // Start offset. Positive owes the voice some silence before the sample
+        // begins; negative discards that much of its head instead.
+        //
+        // The delay is counted in output samples because it is a wall-clock
+        // shift, while the skip is counted in source samples because it is an
+        // amount of recorded material. Deliberately not implemented as a
+        // negative read position: everything before sampleStart is the tail of
+        // the previous stroke in the take file, not silence.
+        if (activeSound->group != nullptr && activeSound->group->startOffset != 0.0)
+        {
+            const double offsetMs = activeSound->group->startOffset;
+
+            if (offsetMs > 0.0)
+            {
+                delaySamplesRemaining = juce::roundToInt (offsetMs * 0.001 * currentSampleRate);
+            }
+            else
+            {
+                const double skip = -offsetMs * 0.001 * activeSound->sourceSampleRate;
+                // Never skip the slice away entirely, or the voice would start
+                // already past its end and never sound at all.
+                currentPosition = juce::jlimit ((double) activeSound->sampleStart,
+                                                juce::jmax ((double) activeSound->sampleStart,
+                                                            (double) activeSound->sampleEnd - 1.0),
+                                                (double) activeSound->sampleStart + skip);
+            }
+        }
+
         double pitchRatio = std::pow (2.0, (note - activeSound->basePitch + detune) / 12.0);
         increment = (activeSound->sourceSampleRate / currentSampleRate) * pitchRatio;
         
@@ -111,6 +140,7 @@ void Voice::stop()
 {
     state = State::Idle;
     activeSound = nullptr;
+    delaySamplesRemaining = 0;
 }
 
 void Voice::choke()
@@ -160,6 +190,23 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
     
     for (int s = 0; s < numSamples; ++s)
     {
+        // Silence still owed by a positive start offset. The envelope is held
+        // at its very beginning rather than advanced, so the wait delays the
+        // attack instead of eating it.
+        if (delaySamplesRemaining > 0)
+        {
+            // A choke or note-off arriving during the wait ends the voice
+            // outright: nothing is sounding yet, so there is nothing to fade.
+            if (state == State::Release)
+            {
+                stop();
+                return;
+            }
+
+            --delaySamplesRemaining;
+            continue;
+        }
+
         // Envelope processing
         if (state == State::Attack)
         {
@@ -529,6 +576,7 @@ void Sampler::assignParameters (juce::AudioProcessorValueTreeState& apvts)
         group->randomDetuneParam = apvts.getRawParameterValue (prefix + "RandomDetune");
         group->minVelocityGainParam = apvts.getRawParameterValue (prefix + "MinVelGain");
         group->groupLevelParam = apvts.getRawParameterValue (prefix + "GroupLevel");
+        group->startOffsetParam = apvts.getRawParameterValue (prefix + "StartOffset");
     }
 }
 
@@ -551,6 +599,7 @@ void SampleGroup::addParameters (std::vector<std::unique_ptr<juce::RangedAudioPa
     params.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { prefix + "RandomDetune", 1 }, name + " Random Detune", 0.0f, 100.0f, (float)randomDetune));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { prefix + "MinVelGain", 1 }, name + " Min Vel Gain", -40.0f, 0.0f, (float)minVelocityGain));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { prefix + "GroupLevel", 1 }, name + " Group Level", -12.0f, 6.0f, (float)groupLevel));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { prefix + "StartOffset", 1 }, name + " Start Offset", -10.0f, 10.0f, (float)startOffset));
 }
 
 void Sampler::updateParams()
@@ -567,6 +616,7 @@ void Sampler::updateParams()
         if (group->randomDetuneParam) group->randomDetune = *group->randomDetuneParam;
         if (group->groupLevelParam) group->groupLevel = *group->groupLevelParam;
         if (group->minVelocityGainParam) group->minVelocityGain = *group->minVelocityGainParam;
+        if (group->startOffsetParam) group->startOffset = *group->startOffsetParam;
     }
 }
 

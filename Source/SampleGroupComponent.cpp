@@ -58,6 +58,15 @@ SampleGroupComponent::SampleGroupComponent (SampleGroup& g, juce::AudioProcessor
     setupSlider (velGainSlider, velGainLabel, "Min Vel Gain", -40.0, 0.0, -40.0);
     velGainSlider.setTextValueSuffix (" dB");
     velGainSlider.setAttachment(new SliderAttachment (apvts, prefix + "MinVelGain", velGainSlider));
+
+    // Slides this group against the others in time: positive plays it later,
+    // negative eats into the head of its samples. A close mic and an ambient
+    // one are the same performance about a metre apart, so a millisecond
+    // either way moves them between reinforcing and cancelling.
+    setupSlider (startOffsetSlider, startOffsetLabel, "Start Offset", -10.0, 10.0, 0.0);
+    startOffsetSlider.setTextValueSuffix (" ms");
+    startOffsetSlider.setCentralValue (0.0);   // reads from the centre, not from -10
+    startOffsetSlider.setAttachment(new SliderAttachment (apvts, prefix + "StartOffset", startOffsetSlider));
 }
 
 SampleGroupComponent::~SampleGroupComponent()
@@ -90,7 +99,8 @@ void SampleGroupComponent::resized()
 {
     auto area = getLocalBounds().reduced (5);
    using fi = juce::FlexItem;
-    juce::FlexBox fbMain,fbDetune,fbRandomDetune, fbGain, fbAttack, fbDecay, fbSustain, fbRelease, fbVelGain;
+    juce::FlexBox fbMain,fbDetune,fbRandomDetune, fbGain, fbAttack, fbDecay, fbSustain, fbRelease, fbVelGain, fbStartOffset;
+    fbStartOffset.flexDirection = juce::FlexBox::Direction::column;
     fbDetune.flexDirection = juce::FlexBox::Direction::column;
     fbRandomDetune.flexDirection = juce::FlexBox::Direction::column;
     fbGain.flexDirection = juce::FlexBox::Direction::column;
@@ -99,6 +109,9 @@ void SampleGroupComponent::resized()
     fbSustain.flexDirection = juce::FlexBox::Direction::column;
     fbRelease.flexDirection = juce::FlexBox::Direction::column;
     fbMain.flexDirection = juce::FlexBox::Direction::row;
+
+    fbStartOffset.items.add(fi(startOffsetLabel).withFlex(0.2f));
+    fbStartOffset.items.add(fi(startOffsetSlider).withFlex(1.f));
 
     fbDetune.items.add(fi(detuneLabel).withFlex(0.2f));
     fbDetune.items.add(fi(detuneSlider).withFlex(1.f));
@@ -127,6 +140,7 @@ void SampleGroupComponent::resized()
     fbRelease.items.add(fi(releaseSlider).withFlex(1.f));
 
     fbMain.items.add(fi(nameLabel).withFlex(1.f));
+    fbMain.items.add(fi(fbStartOffset).withFlex(.6f));
     fbMain.items.add(fi(fbDetune).withFlex(.6f));
     fbMain.items.add(fi(fbRandomDetune).withFlex(.6f));
     fbMain.items.add(fi(fbGain).withFlex(.6f));
