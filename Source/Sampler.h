@@ -20,8 +20,17 @@
  */
 enum class ReleaseMode
 {
-    Loop,    ///< Keep looping and let the release envelope fade it out.
-    Region   ///< Jump to the sound's releaseStart and play the tail once.
+    /** Keep looping and let the ADSR release fade it out. */
+    Loop,
+
+    /** Jump to the sound's releaseStart and play the recorded tail once,
+        crossfading out of the loop so the jump does not click.
+
+        The ADSR release is not used: the envelope holds at its sustain level and
+        the voice ends when the tail reaches sampleEnd, so what you hear is the
+        instrument's own decay rather than a synthesised one. A choke still fades
+        the voice out, tail and all. */
+    Region
 };
 
 /**
@@ -90,7 +99,10 @@ struct SampleGroup
         before loopStart, so it eats into the attack region. Each voice clamps
         it at note start against what that sound can actually afford, which is
         the smaller of the loop length and the distance from sampleStart to
-        loopStart. */
+        loopStart.
+
+        Also sets the length of the jump into the release region, where it gets
+        a floor instead: see ReleaseMode::Region. */
     double crossfadeMs = 0.0;
 
     CrossfadeShape crossfadeShape = CrossfadeShape::EqualPower;
@@ -222,9 +234,36 @@ private:
     enum class State { Attack, Decay, Sustain, Release, Idle };
     State state = State::Idle;
 
+    /** Which part of the sound the read head is in.
+
+        Body covers the attack and the loop, which the head cannot tell apart:
+        it simply runs forward and wraps. Release is the tail after the note has
+        been let go, and only ReleaseMode::Region ever reaches it.
+
+        Deliberately separate from State, which is the envelope's business. In
+        Region mode the envelope stays in Sustain while the head plays the tail,
+        so one enum could not describe both. */
+    enum class Region { Body, Release };
+    Region region = Region::Body;
+
+    /** Shortest jump fade into the release region, in milliseconds.
+
+        Unlike the loop seam, this one cannot be authored away: the head leaves
+        the loop at whatever phase the note-off happened to fall on, so there is
+        always a step. A few milliseconds is enough to hide it. */
+    static constexpr double minReleaseFadeMs = 5.0;
+
     /** True when this voice should wrap at the loop points rather than run to
         sampleEnd. Looping is a group setting and a one-shot never loops. */
     bool isLoopingNow() const;
+
+    /** True when a note-off should jump to the release region rather than run
+        the envelope's release over the loop. */
+    bool usesReleaseRegion() const;
+
+    /** Moves the main head to releaseStart, hands the loop over to a second
+        head, and arms the fade between them. */
+    void enterReleaseRegion();
 
     /** Longest crossfade this sound can afford, in source samples: it must be
         shorter than the loop, and it reads backwards from loopStart, so it
@@ -234,9 +273,19 @@ private:
     /** The group's crossfade length clamped by maxCrossfadeSamples(). */
     double requestedCrossfadeSamples() const;
 
+    /** The group's gain law evaluated at a fade progress of 0 to 1: gainOut
+        goes 1 to 0, gainIn goes 0 to 1. Shared by the loop seam and the release
+        jump so a group fades the same way wherever it fades. */
+    void fadeGains (double g, double& gainOut, double& gainIn) const;
+
     /** Crossfade gains for a position inside the fade window. Returns false
         when the position is not in the window, leaving the gains untouched. */
     bool crossfadeGains (double position, double& gainMain, double& gainNext) const;
+
+    /** Gains for the jump into the release region, driven by how far the main
+        head has travelled past releaseStart. Returns false once the fade is
+        over, which is also when the loop head stops being read. */
+    bool releaseFadeGains (double& gainRelease, double& gainLoop) const;
 
     /** Linearly interpolated read at a fractional position, returning silence
         outside the buffer. With wrapAtLoop, the sample following loopEnd - 1 is
@@ -250,8 +299,10 @@ private:
         in which case it has already been stopped. */
     bool advanceEnvelope();
 
-    /** Advances the read position by one output sample, wrapping at the loop. */
-    void advancePosition (bool isLooping);
+    /** Advances a read position by one output sample, wrapping at the loop when
+        asked. Takes the position by reference because the release fade runs two
+        heads over the same sound at the same increment. */
+    void advance (double& position, bool wrapAtLoop) const;
 
     const Sound* activeSound = nullptr;
     int currentNote = 0;
@@ -263,6 +314,15 @@ private:
     int delaySamplesRemaining = 0;
 
     double currentPosition = 0.0;
+
+    /** Second head, alive only during the fade into the release region: it
+        carries on looping where the main head left off so the loop can be faded
+        out instead of cut. */
+    double loopPosition = 0.0;
+
+    /** Length of the release jump fade in source samples, frozen at note-off so
+        a parameter change cannot move the gains mid-fade. */
+    double releaseFadeSamples = 0.0;
 
     /** Active loop crossfade length in source samples, 0 for a hard seam.
         Refreshed per block from the group parameter, but never while the read

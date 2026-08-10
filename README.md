@@ -239,6 +239,18 @@ voice clamps the requested length to the smaller of the loop length and the
 distance from `sampleStart` to `loopStart`, so an over-long `crossfade` is
 reduced rather than reading outside the sound.
 
+With `releaseMode="region"`, note-off moves playback to `releaseStart` and
+crossfades out of the loop, which keeps running underneath for the length of the
+fade. The ADSR `release` is not used: the envelope holds at `sustain` and the
+voice ends when the tail reaches `sampleEnd`, so the decay you hear is the
+recorded one. A choke (mute group) still fades the voice out.
+
+That jump fade reuses `crossfade`, but with a 5 ms floor and clamped to the
+length of the tail. The floor is there because a loop seam can be authored away
+by picking matching zero crossings, whereas the release jump leaves the loop at
+whatever point the note-off happened to fall on, so `crossfade="0"` would click
+on every release.
+
 ## Resource Handling
 
 The plugin loads files from JUCE's `BinaryData`.

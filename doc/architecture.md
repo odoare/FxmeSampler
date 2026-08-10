@@ -204,10 +204,46 @@ halves that are only loosely correlated (room tails, ensemble, noise). Linear
 holds summed amplitude constant and is better when the two sides are nearly the
 same waveform, where equal power would bulge by 3 dB in the middle.
 
-The release region is a genuinely different mechanism, not a reuse of the
-above. On note-off from an arbitrary position there is no algebraic
-relationship to exploit, so entering releaseStart needs a second read position
-with its own accumulator, faded over a short constant.
+### The release region
+
+With releaseMode="region", note-off does not run the ADSR release over the loop.
+Instead the main head jumps to releaseStart and plays the tail once, and the
+loop it left carries on under a second head so it can be faded out rather than
+cut. The envelope holds at its sustain level throughout and the voice ends when
+the tail reaches sampleEnd, so what is heard is the instrument's own decay. A
+choke still fades the voice out, tail and all.
+
+This is a genuinely different mechanism from the loop crossfade, not a reuse of
+it. On note-off from an arbitrary position there is no algebraic relationship
+between the two sides to exploit, so the outgoing head needs its own
+accumulator. Both heads advance by the same increment, so the fade holds at any
+pitch. Progress is read off the main head rather than counted down:
+
+```
+R = releaseFade, frozen at note-off
+while p - releaseStart < R:
+    g   = (p - releaseStart) / R
+    out = b(g) * read(p) + a(g) * body(loopHead)
+```
+
+with the same a and b the group uses for its seam, so a group fades the same way
+wherever it fades. R is max(5 ms, crossfade), clamped to sampleEnd -
+releaseStart. The floor is the difference between the two fades: a loop seam can
+be authored away by choosing matching zero crossings, so crossfade="0" is a
+legitimate choice there, but the release jump leaves the loop at whatever phase
+the note-off fell on and always steps.
+
+body() above is the whole loop mechanism, seam crossfade included, not a plain
+read. The outgoing head is still inside the loop and can still reach loopEnd
+during the fade; giving it a bare seam puts back exactly the click the release
+fade exists to remove, and measurably so: at a 50 ms fade the worst step across
+the note-off is 4x the waveform's own steepest step with a bare seam and 1.0x
+with this. It costs a third read only while a release fade and a seam fade
+overlap, which is a few milliseconds per note-off.
+
+Nothing takes the release path unless the sound loops, the group asks for
+releaseMode="region", and releaseStart < sampleEnd. Without a tail to jump to it
+falls back to fading the loop out, which is at least audible.
 
 ## Threading contract
 

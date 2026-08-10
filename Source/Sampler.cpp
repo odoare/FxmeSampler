@@ -59,6 +59,9 @@ void Voice::start (const Sound* sound, int note, float velocity, double sampleRa
     currentPosition = (sound ? (double)sound->sampleStart : 0.0);
     delaySamplesRemaining = 0;
     crossfadeSamples = 0.0;   // adopted from the group at the first block
+    region = Region::Body;
+    loopPosition = 0.0;
+    releaseFadeSamples = 0.0;
     currentVelocity = velocity;
     currentSampleRate = sampleRate;
     
@@ -142,6 +145,7 @@ void Voice::stop()
     state = State::Idle;
     activeSound = nullptr;
     delaySamplesRemaining = 0;
+    region = Region::Body;
 }
 
 void Voice::choke()
@@ -157,10 +161,22 @@ void Voice::choke()
 
 void Voice::noteOff()
 {
-    if (state != State::Idle && state != State::Release)
+    // Already going, or already gone. The region test matters as much as the
+    // state one: in Region mode the envelope stays in Sustain while the tail
+    // plays, so without it a second note-off would restart the tail.
+    if (state == State::Idle || state == State::Release || region == Region::Release)
+        return;
+
+    // A note released before its start offset has even elapsed has nothing to
+    // fade and no reason to play a tail, so it falls through to the envelope
+    // release, which the delay branch in renderNextBlock turns into a stop.
+    if (usesReleaseRegion() && delaySamplesRemaining == 0)
     {
-        state = State::Release;
+        enterReleaseRegion();
+        return;
     }
+
+    state = State::Release;
 }
 
 bool Voice::isActive() const
@@ -177,6 +193,39 @@ bool Voice::isLoopingNow() const
     if (activeSound->group->isOneShot)
         return false;
     return activeSound->group->isLoop;
+}
+
+bool Voice::usesReleaseRegion() const
+{
+    // Only a looping voice has anything to leave: a one-shot is already playing
+    // straight through to sampleEnd, tail included.
+    if (! isLoopingNow())
+        return false;
+
+    if (activeSound->group->releaseMode != ReleaseMode::Region)
+        return false;
+
+    // Nothing recorded after releaseStart, so there is no tail to jump to. Fall
+    // back to fading the loop out, which is at least audible.
+    return activeSound->releaseStart < activeSound->sampleEnd;
+}
+
+void Voice::enterReleaseRegion()
+{
+    // The main head takes the tail and the second head inherits the loop, so
+    // the rest of the render loop keeps treating currentPosition as the thing
+    // that decides when the voice ends.
+    loopPosition = currentPosition;
+    currentPosition = (double) activeSound->releaseStart;
+    region = Region::Release;
+
+    // Same knob as the loop seam, but with a floor, and clamped so the fade
+    // cannot outlast the tail it is fading into.
+    const double tail = (double) activeSound->sampleEnd - (double) activeSound->releaseStart;
+    const double asked = juce::jmax (minReleaseFadeMs, activeSound->group->crossfadeMs)
+                             * 0.001 * activeSound->sourceSampleRate;
+
+    releaseFadeSamples = juce::jlimit (0.0, tail, asked);
 }
 
 double Voice::maxCrossfadeSamples() const
@@ -207,24 +256,15 @@ double Voice::requestedCrossfadeSamples() const
     return juce::jmin (ms * 0.001 * activeSound->sourceSampleRate, maxCrossfadeSamples());
 }
 
-bool Voice::crossfadeGains (double position, double& gainMain, double& gainNext) const
+void Voice::fadeGains (double g, double& gainOut, double& gainIn) const
 {
-    if (crossfadeSamples <= 0.0 || activeSound == nullptr)
-        return false;
-
-    const double fadeFrom = (double) activeSound->loopEnd - crossfadeSamples;
-    if (position < fadeFrom)
-        return false;
-
-    const double g = juce::jlimit (0.0, 1.0, (position - fadeFrom) / crossfadeSamples);
-
-    if (activeSound->group != nullptr
+    if (activeSound != nullptr && activeSound->group != nullptr
         && activeSound->group->crossfadeShape == CrossfadeShape::Linear)
     {
         // Constant summed amplitude: right when the two sides are nearly the
         // same waveform, where equal power would bulge by 3 dB in the middle.
-        gainMain = 1.0 - g;
-        gainNext = g;
+        gainOut = 1.0 - g;
+        gainIn = g;
     }
     else
     {
@@ -241,10 +281,38 @@ bool Voice::crossfadeGains (double position, double& gainMain, double& gainNext)
         // float's exact-integer range, and evaluating them in float costs two
         // decimal digits of accuracy.
         const double angle = g * juce::MathConstants<double>::halfPi;
-        gainMain = juce::dsp::FastMathApproximations::cos (angle);
-        gainNext = juce::dsp::FastMathApproximations::sin (angle);
+        gainOut = juce::dsp::FastMathApproximations::cos (angle);
+        gainIn = juce::dsp::FastMathApproximations::sin (angle);
     }
+}
 
+bool Voice::crossfadeGains (double position, double& gainMain, double& gainNext) const
+{
+    if (crossfadeSamples <= 0.0 || activeSound == nullptr)
+        return false;
+
+    const double fadeFrom = (double) activeSound->loopEnd - crossfadeSamples;
+    if (position < fadeFrom)
+        return false;
+
+    fadeGains (juce::jlimit (0.0, 1.0, (position - fadeFrom) / crossfadeSamples),
+               gainMain, gainNext);
+    return true;
+}
+
+bool Voice::releaseFadeGains (double& gainRelease, double& gainLoop) const
+{
+    if (releaseFadeSamples <= 0.0 || activeSound == nullptr)
+        return false;
+
+    // Progress is read off the main head rather than counted down, exactly as
+    // the loop seam does it, so the two fades cannot drift apart in style.
+    const double travelled = currentPosition - (double) activeSound->releaseStart;
+    if (travelled >= releaseFadeSamples)
+        return false;
+
+    fadeGains (juce::jlimit (0.0, 1.0, travelled / releaseFadeSamples),
+               gainLoop, gainRelease);
     return true;
 }
 
@@ -311,20 +379,20 @@ bool Voice::advanceEnvelope()
     return true;
 }
 
-void Voice::advancePosition (bool isLooping)
+void Voice::advance (double& position, bool wrapAtLoop) const
 {
-    currentPosition += increment;
+    position += increment;
 
-    if (! isLooping || currentPosition < (double) activeSound->loopEnd)
+    if (! wrapAtLoop || position < (double) activeSound->loopEnd)
         return;
 
     const double loopLen = (double) activeSound->loopEnd - (double) activeSound->loopStart;
-    const double over = currentPosition - (double) activeSound->loopEnd;
+    const double over = position - (double) activeSound->loopEnd;
 
     if (loopLen > 0.0)
-        currentPosition = (double) activeSound->loopStart + std::fmod (over, loopLen);
+        position = (double) activeSound->loopStart + std::fmod (over, loopLen);
     else
-        currentPosition = (double) activeSound->loopStart;
+        position = (double) activeSound->loopStart;
 }
 
 void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
@@ -337,15 +405,25 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
     const int numOutputChannels = outputBuffer.getNumChannels();
     const auto& targetChannels = activeSound->outputChannels;
 
-    const bool isLooping = isLoopingNow();
+    // Two heads, and which one is which depends on the region.
+    //
+    // The body head plays the attack and the loop. While the note is held it is
+    // the main head, currentPosition. Once the release region takes that over it
+    // moves to loopPosition and lives only as long as the jump fade.
+    //
+    // isLooping is about the main head alone: in the release region it runs
+    // straight out to sampleEnd, whatever the group says about looping.
+    const bool soundLoops = isLoopingNow();
+    const bool inReleaseRegion = (region == Region::Release);
+    const bool isLooping = soundLoops && ! inReleaseRegion;
 
     // Track the group's crossfade knob at block rate, but never adopt a new
-    // width while the read head is already inside a fade: the gains are a
+    // width while the body head is already inside a fade: the gains are a
     // function of the width, so changing it mid-fade would step them.
-    if (isLooping)
+    if (soundLoops)
     {
         double unusedA = 0.0, unusedB = 0.0;
-        if (! crossfadeGains (currentPosition, unusedA, unusedB))
+        if (! crossfadeGains (inReleaseRegion ? loopPosition : currentPosition, unusedA, unusedB))
             crossfadeSamples = requestedCrossfadeSamples();
     }
     else
@@ -355,10 +433,35 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
 
     const double loopLen = (double) activeSound->loopEnd - (double) activeSound->loopStart;
 
-    // With a crossfade running, the main head's interpolation partner is the
-    // real next sample rather than loopStart: the fade is what joins the seam,
-    // so wrapping here as well would apply the join twice.
-    const bool wrapForInterpolation = isLooping && crossfadeSamples <= 0.0;
+    // Body head state, refreshed once per sample and read by the lambda below.
+    double bodyPosition = 0.0, bodyMain = 1.0, bodyNext = 0.0;
+    bool bodyFading = false;
+
+    // The looping body sampled at one position, seam crossfade included. Both
+    // heads go through here, so a seam sounds the same whichever head crosses
+    // it: the outgoing head during a release fade is still inside the loop and
+    // can still reach loopEnd, and cutting its crossfade would put back exactly
+    // the click the release fade is there to avoid.
+    //
+    // With a crossfade running, the interpolation partner is the real next
+    // sample rather than loopStart: the fade is what joins the seam, so wrapping
+    // here as well would apply the join twice.
+    auto readBody = [&] (int channel) -> float
+    {
+        const float main = readInterpolated (sourceBuffer, channel, bodyPosition,
+                                             soundLoops && ! bodyFading);
+        if (! bodyFading)
+            return main;
+
+        // The partner head is simply one loop behind. As the body head sweeps
+        // loopEnd-X to loopEnd, this one sweeps loopStart-X to loopStart, which
+        // is exactly the material the loop is about to jump into. No further
+        // accumulator is needed, and it never wraps: it is reading pre-loop
+        // material, not looping over it.
+        const float behind = readInterpolated (sourceBuffer, channel,
+                                               bodyPosition - loopLen, false);
+        return (float) (bodyMain * main + bodyNext * behind);
+    };
 
     for (int s = 0; s < numSamples; ++s)
     {
@@ -393,10 +496,15 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
         // than adding silence to it.
         const int pos = (int) currentPosition;
 
-        // Once per sample, not per channel: the fade gains depend only on the
+        // Once per sample, not per channel: every gain here depends only on a
         // read position.
-        double gainMain = 1.0, gainNext = 0.0;
-        const bool fading = isLooping && crossfadeGains (currentPosition, gainMain, gainNext);
+        double gainRelease = 1.0, gainLoop = 0.0;
+        const bool leavingLoop = inReleaseRegion && releaseFadeGains (gainRelease, gainLoop);
+
+        // The body head goes quiet the moment the release fade is over.
+        const bool bodyPlaying = ! inReleaseRegion || leavingLoop;
+        bodyPosition = inReleaseRegion ? loopPosition : currentPosition;
+        bodyFading = bodyPlaying && soundLoops && crossfadeGains (bodyPosition, bodyMain, bodyNext);
 
         if (pos >= 0 && pos < sourceBuffer.getNumSamples())
         {
@@ -409,27 +517,29 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
                     || srcCh < 0 || srcCh >= numSourceChannels)
                     continue;
 
-                float sample = readInterpolated (sourceBuffer, srcCh, currentPosition,
-                                                 wrapForInterpolation);
+                float sample;
 
-                if (fading)
+                if (inReleaseRegion)
                 {
-                    // The second head is simply one loop behind. As the main
-                    // head sweeps loopEnd-X to loopEnd, this one sweeps
-                    // loopStart-X to loopStart, which is exactly the material
-                    // the loop is about to jump into. No second accumulator is
-                    // needed, and it never wraps: it is reading pre-loop
-                    // material, not looping over it.
-                    const float behind = readInterpolated (sourceBuffer, srcCh,
-                                                           currentPosition - loopLen, false);
-                    sample = (float) (gainMain * sample + gainNext * behind);
+                    // The tail, played once, never wrapping.
+                    sample = readInterpolated (sourceBuffer, srcCh, currentPosition, false);
+
+                    if (leavingLoop)
+                        sample = (float) (gainRelease * sample + gainLoop * readBody (srcCh));
+                }
+                else
+                {
+                    sample = readBody (srcCh);
                 }
 
                 outputBuffer.addSample (outCh, startSample + s, sample * envelopeVal * currentVelocity);
             }
         }
 
-        advancePosition (isLooping);
+        advance (currentPosition, isLooping);
+
+        if (leavingLoop)
+            advance (loopPosition, true);
     }
 }
 
