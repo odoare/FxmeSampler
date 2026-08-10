@@ -152,6 +152,63 @@ as L = M + width * S. It reads only W, Y, Z and X, and adds into the
 destination rather than overwriting, so several strips can sum into one bus.
 Source/AmbixToMS.h re-exports it under the old name.
 
+## Playback regions and loop crossfade
+
+This section is the reference implementation in prose. The Python authoring
+tool renders its loop preview offline and has to agree with the engine sample
+for sample, so if the two ever disagree, this is the arbiter.
+
+A sound carries five ordered points, all indices into the source file:
+
+```
+sampleStart <= loopStart < loopEnd <= releaseStart <= sampleEnd
+```
+
+loopEnd and sampleEnd are exclusive, matching the convention sampleEnd already
+used. The points are clamped into order when the mapping loads, and any
+correction is logged rather than accepted silently. Unset points (-1) default
+inwards, not to zero: loopStart to sampleStart, loopEnd to sampleEnd,
+releaseStart to loopEnd. Defaulting loopStart to 0 would be wrong here, because
+a sound is a slice of a longer take, so 0 is somewhere in an earlier stroke.
+
+The loop crossfade runs backwards from loopEnd. With loopLen = loopEnd -
+loopStart and a crossfade of X samples, for a read position p:
+
+```
+while p in [loopEnd - X, loopEnd):
+    g   = (p - (loopEnd - X)) / X
+    out = a(g) * read(p) + b(g) * read(p - loopLen)
+
+on p >= loopEnd:  p -= loopLen
+```
+
+The second read head is simply p - loopLen. As p sweeps loopEnd-X to loopEnd it
+sweeps loopStart-X to loopStart, which is exactly the material the loop is
+about to jump into, so no second accumulator is needed and the seam is
+continuous by construction: at g=0 the output is the plain read, and at g=1 it
+is read(loopStart), which is what the sample after the wrap will be.
+
+Two constraints follow, and each voice clamps X against them at note start
+rather than trusting the mapping:
+
+  X < loopLen                    the fade cannot be longer than the loop
+  loopStart - X >= sampleStart   the fade reads backwards into the attack
+
+Gain laws, with g running 0 to 1:
+
+  equal power:  a = cos(g * pi/2),  b = sin(g * pi/2)
+  linear:       a = 1 - g,          b = g
+
+Equal power is the default. It holds summed power constant, which suits loop
+halves that are only loosely correlated (room tails, ensemble, noise). Linear
+holds summed amplitude constant and is better when the two sides are nearly the
+same waveform, where equal power would bulge by 3 dB in the middle.
+
+The release region is a genuinely different mechanism, not a reuse of the
+above. On note-off from an arbitrary position there is no algebraic
+relationship to exploit, so entering releaseStart needs a second read position
+with its own accumulator, faded over a short constant.
+
 ## Threading contract
 
 There are no locks anywhere in Source/, and this is deliberate rather than an

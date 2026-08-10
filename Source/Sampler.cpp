@@ -265,7 +265,9 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
                 float sample = sourceBuffer.getSample (srcCh, pos);
                 
                 float nextSample = 0.0f;
-                if (isLooping && pos >= activeSound->loopEnd)
+                // loopEnd is exclusive, like sampleEnd: the last sample of the
+                // loop is loopEnd - 1, and the one after it is loopStart.
+                if (isLooping && pos + 1 >= activeSound->loopEnd)
                 {
                     nextSample = sourceBuffer.getSample (srcCh, activeSound->loopStart);
                 }
@@ -283,10 +285,10 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
         
         if (isLooping)
         {
-            if (currentPosition >= (double)activeSound->loopEnd + 1.0) // Passed the end of the loop
+            if (currentPosition >= (double)activeSound->loopEnd) // Passed the end of the loop
             {
-                double loopLen = (double)activeSound->loopEnd - (double)activeSound->loopStart + 1.0;
-                double over = currentPosition - ((double)activeSound->loopEnd + 1.0);
+                double loopLen = (double)activeSound->loopEnd - (double)activeSound->loopStart;
+                double over = currentPosition - (double)activeSound->loopEnd;
                 if (loopLen > 0.0)
                     currentPosition = (double)activeSound->loopStart + std::fmod(over, loopLen);
                 else
@@ -428,6 +430,17 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
             group->randomDetune = child->getDoubleAttribute ("randomDetune", 0.0);
             group->groupLevel = child->getDoubleAttribute ("groupLevel", 0.0);
             group->minVelocityGain = child->getDoubleAttribute ("minVelocityGain", -40.0);
+            group->crossfadeMs = child->getDoubleAttribute ("crossfade", 0.0);
+
+            group->crossfadeShape = child->getStringAttribute ("crossfadeShape", "equalPower")
+                                        .equalsIgnoreCase ("linear")
+                                            ? CrossfadeShape::Linear
+                                            : CrossfadeShape::EqualPower;
+
+            group->releaseMode = child->getStringAttribute ("releaseMode", "loop")
+                                     .equalsIgnoreCase ("region")
+                                         ? ReleaseMode::Region
+                                         : ReleaseMode::Loop;
 
             // Parse output channels for the group
             group->outputChannels.clear();
@@ -498,8 +511,9 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
 
             sound.sampleStart = child->getIntAttribute ("sampleStart", 0);
             sound.sampleEnd = child->getIntAttribute ("sampleEnd", -1);
-            sound.loopStart = child->getIntAttribute ("loopStart", 0);
+            sound.loopStart = child->getIntAttribute ("loopStart", -1);
             sound.loopEnd = child->getIntAttribute ("loopEnd", -1);
+            sound.releaseStart = child->getIntAttribute ("releaseStart", -1);
             
             // Apply Group settings
             juce::String groupName = child->getStringAttribute ("group");
@@ -523,20 +537,42 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
 
             loadSound (sound);
 
-            // Resolve defaults for end points if they were -1 or invalid
+            // Resolve the five region points and force them into order:
+            //
+            //     sampleStart <= loopStart < loopEnd <= releaseStart <= sampleEnd
+            //
+            // Unset values (-1) take a sensible default rather than 0. That
+            // matters for these kits: a sound is a slice of a longer take, so
+            // clamping loopStart to 0 rather than to sampleStart would let a
+            // loop read backwards into the previous stroke.
             if (sound.audioBuffer)
             {
-                int numSamples = sound.audioBuffer->getNumSamples();
-                if (sound.sampleEnd == -1 || sound.sampleEnd > numSamples) sound.sampleEnd = numSamples;
-                if (sound.sampleStart < 0) sound.sampleStart = 0;
-                if (sound.sampleStart > sound.sampleEnd) sound.sampleStart = sound.sampleEnd;
+                const int numSamples = sound.audioBuffer->getNumSamples();
 
-                if (sound.loopEnd == -1 || sound.loopEnd >= numSamples) sound.loopEnd = sound.sampleEnd - 1;
-                if (sound.loopStart < 0) sound.loopStart = 0;
-                if (sound.loopStart > sound.loopEnd) sound.loopStart = sound.loopEnd;
-                
-                if (sound.sampleEnd < 0) sound.sampleEnd = 0;
-                if (sound.loopEnd < 0) sound.loopEnd = 0;
+                if (sound.sampleEnd == -1 || sound.sampleEnd > numSamples) sound.sampleEnd = numSamples;
+                sound.sampleEnd = juce::jlimit (0, numSamples, sound.sampleEnd);
+                sound.sampleStart = juce::jlimit (0, sound.sampleEnd, sound.sampleStart);
+
+                if (sound.loopStart < 0) sound.loopStart = sound.sampleStart;
+                if (sound.loopEnd < 0 || sound.loopEnd > sound.sampleEnd) sound.loopEnd = sound.sampleEnd;
+                if (sound.releaseStart < 0) sound.releaseStart = sound.loopEnd;
+
+                const int requested[3] = { sound.loopStart, sound.loopEnd, sound.releaseStart };
+
+                sound.loopStart    = juce::jlimit (sound.sampleStart, sound.sampleEnd, sound.loopStart);
+                sound.loopEnd      = juce::jlimit (sound.loopStart,   sound.sampleEnd, sound.loopEnd);
+                sound.releaseStart = juce::jlimit (sound.loopEnd,     sound.sampleEnd, sound.releaseStart);
+
+                if (requested[0] != sound.loopStart || requested[1] != sound.loopEnd
+                    || requested[2] != sound.releaseStart)
+                {
+                    DBG ("Warning: out-of-order region points in sound " << sound.name
+                         << " (" << sound.resourceName << "): loopStart/loopEnd/releaseStart "
+                         << requested[0] << "/" << requested[1] << "/" << requested[2]
+                         << " clamped to " << sound.loopStart << "/" << sound.loopEnd
+                         << "/" << sound.releaseStart
+                         << " within " << sound.sampleStart << ".." << sound.sampleEnd);
+                }
             }
 
             // Resolve auto-source channels (-1)

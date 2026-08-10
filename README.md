@@ -172,7 +172,10 @@ Defines an auxiliary bus (always stereo).
 | `muteGroup` | Integer | 0 | Sounds in the same non-zero mute group cut each other off (e.g., Open/Closed Hi-Hat). |
 | `midiChannel`| String | "0" | MIDI channel (1-16) or "omni" (0). |
 | `oneShot` | Boolean | true | If `true`, plays full sample ignoring note-off. If `false`, enters release phase on note-off. |
-| `loop` | Boolean | false | If `true`, loops the sample between `loopStart` and `loopEnd`. |
+| `loop` | Boolean | false | If `true`, loops the sample between `loopStart` and `loopEnd`. Requires `oneShot="false"`. |
+| `crossfade` | Float | 0.0 | Loop crossfade length in milliseconds. 0 gives a hard seam. Clamped per sound against the loop length and the attack region (see below). |
+| `crossfadeShape` | String | "equalPower" | `equalPower` or `linear`. Equal power suits loosely correlated loop halves (room tails, ensemble); linear suits two nearly identical waveforms. |
+| `releaseMode` | String | "loop" | `loop` keeps looping and lets the release envelope fade it out. `region` jumps to the sound's `releaseStart` and plays the tail once. |
 | `attack` | Float | 0.001 | Attack time in seconds. |
 | `decay` | Float | 0.0 | Decay time in seconds. |
 | `sustain` | Float | 1.0 | Sustain level (0.0 to 1.0). |
@@ -201,9 +204,40 @@ Defines an auxiliary bus (always stereo).
 | `velLow` | Integer | 0 | Lowest velocity. |
 | `velHigh` | Integer | 127 | Highest velocity. |
 | `sampleStart`| Integer | 0 | Sample index to start playback. |
-| `sampleEnd` | Integer | -1 | Sample index to stop playback (-1 = end of file). |
-| `loopStart` | Integer | 0 | Sample index for loop start point. |
-| `loopEnd` | Integer | -1 | Sample index for loop end point (-1 = sampleEnd). |
+| `sampleEnd` | Integer | -1 | Sample index to stop playback, exclusive (-1 = end of file). |
+| `loopStart` | Integer | -1 | Sample index where the loop begins (-1 = `sampleStart`). |
+| `loopEnd` | Integer | -1 | Sample index where the loop ends, exclusive (-1 = `sampleEnd`). |
+| `releaseStart` | Integer | -1 | Sample index where the release tail begins, used by `releaseMode="region"` (-1 = `loopEnd`). |
+
+#### Playback regions
+
+A sound is described by five ordered points:
+
+```
+sampleStart <= loopStart < loopEnd <= releaseStart <= sampleEnd
+
+|<-- attack -->|<---- loop ---->|<------ release tail ------>|
+sampleStart  loopStart       loopEnd/releaseStart        sampleEnd
+```
+
+*   **Attack** (`sampleStart` to `loopStart`) plays once when the note starts.
+*   **Loop** (`loopStart` to `loopEnd`) repeats while the note is held.
+*   **Release tail** (`releaseStart` to `sampleEnd`) plays once after note-off,
+    when the group uses `releaseMode="region"`.
+
+`loopEnd` and `sampleEnd` are exclusive: the last sample played is the one
+before them. Points given out of order are clamped back into order on load and
+the correction is logged, rather than being silently accepted.
+
+A one-shot sound ignores the loop and release points entirely and plays
+`sampleStart` to `sampleEnd`, which is what all the kits in this repository
+currently do.
+
+The crossfade runs *backwards* from `loopEnd`, blending in the material
+immediately before `loopStart`, so it consumes part of the attack region. Each
+voice clamps the requested length to the smaller of the loop length and the
+distance from `sampleStart` to `loopStart`, so an over-long `crossfade` is
+reduced rather than reading outside the sound.
 
 ## Resource Handling
 

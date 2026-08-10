@@ -16,8 +16,45 @@
 
 //==============================================================================
 /**
+ * @brief What happens when a looping note is released.
+ */
+enum class ReleaseMode
+{
+    Loop,    ///< Keep looping and let the release envelope fade it out.
+    Region   ///< Jump to the sound's releaseStart and play the tail once.
+};
+
+/**
+ * @brief Gain law used to blend the two sides of a crossfade.
+ *
+ * EqualPower holds the summed power constant, which suits loop halves that are
+ * only loosely correlated (noise, room tails, ensemble). Linear holds the
+ * summed amplitude constant, which is better when the two sides are nearly the
+ * same waveform, where equal-power would bulge in the middle.
+ */
+enum class CrossfadeShape
+{
+    EqualPower,
+    Linear
+};
+
+//==============================================================================
+/**
  * @struct SampleGroup
  * @brief Represents a group of samples sharing common properties like ADSR and routing.
+ *
+ * Playback regions
+ * ----------------
+ * A sound is described by five ordered points:
+ *
+ *     sampleStart <= loopStart < loopEnd <= releaseStart <= sampleEnd
+ *
+ *   sampleStart .. loopStart   attack, played once
+ *   loopStart   .. loopEnd     loop, repeated while the note is held
+ *   releaseStart.. sampleEnd   release tail, played once (ReleaseMode::Region)
+ *
+ * A one-shot sound ignores all of it and simply plays sampleStart..sampleEnd,
+ * which is what every kit in this repository currently does.
  */
 struct SampleGroup
 {
@@ -46,6 +83,18 @@ struct SampleGroup
         same performance a metre or so apart, so a millisecond either way is
         the difference between reinforcement and cancellation. */
     double startOffset = 0.0;
+
+    /** Loop crossfade length in milliseconds, 0 for a hard seam.
+
+        The fade runs backwards from loopEnd and reads the material immediately
+        before loopStart, so it eats into the attack region. Each voice clamps
+        it at note start against what that sound can actually afford, which is
+        the smaller of the loop length and the distance from sampleStart to
+        loopStart. */
+    double crossfadeMs = 0.0;
+
+    CrossfadeShape crossfadeShape = CrossfadeShape::EqualPower;
+    ReleaseMode releaseMode = ReleaseMode::Loop;
 
     std::vector<int> outputChannels;
 
@@ -88,6 +137,10 @@ struct Sound
     int sampleEnd = 0;
     int loopStart = 0;
     int loopEnd = 0;
+
+    /** Where the release tail begins, for ReleaseMode::Region. Defaults to
+        loopEnd, making the tail everything the loop does not cover. */
+    int releaseStart = 0;
     juce::Range<int> velocityRange { 0, 128 };
     std::vector<int> outputChannels;
     double attack = 0.001;  // Seconds
