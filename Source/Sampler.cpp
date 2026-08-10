@@ -58,6 +58,7 @@ void Voice::start (const Sound* sound, int note, float velocity, double sampleRa
     currentNote = note;
     currentPosition = (sound ? (double)sound->sampleStart : 0.0);
     delaySamplesRemaining = 0;
+    crossfadeSamples = 0.0;   // adopted from the group at the first block
     currentVelocity = velocity;
     currentSampleRate = sampleRate;
     
@@ -178,6 +179,75 @@ bool Voice::isLoopingNow() const
     return activeSound->group->isLoop;
 }
 
+double Voice::maxCrossfadeSamples() const
+{
+    if (activeSound == nullptr)
+        return 0.0;
+
+    const double loopLen = (double) activeSound->loopEnd - (double) activeSound->loopStart;
+    if (loopLen <= 1.0)
+        return 0.0;
+
+    // The second read head runs from loopStart - X to loopStart, so the fade
+    // is limited by how much attack region there is in front of the loop.
+    const double attackRoom = (double) activeSound->loopStart - (double) activeSound->sampleStart;
+
+    return juce::jmax (0.0, juce::jmin (loopLen - 1.0, attackRoom));
+}
+
+double Voice::requestedCrossfadeSamples() const
+{
+    if (activeSound == nullptr || activeSound->group == nullptr)
+        return 0.0;
+
+    const double ms = activeSound->group->crossfadeMs;
+    if (ms <= 0.0)
+        return 0.0;
+
+    return juce::jmin (ms * 0.001 * activeSound->sourceSampleRate, maxCrossfadeSamples());
+}
+
+bool Voice::crossfadeGains (double position, double& gainMain, double& gainNext) const
+{
+    if (crossfadeSamples <= 0.0 || activeSound == nullptr)
+        return false;
+
+    const double fadeFrom = (double) activeSound->loopEnd - crossfadeSamples;
+    if (position < fadeFrom)
+        return false;
+
+    const double g = juce::jlimit (0.0, 1.0, (position - fadeFrom) / crossfadeSamples);
+
+    if (activeSound->group != nullptr
+        && activeSound->group->crossfadeShape == CrossfadeShape::Linear)
+    {
+        // Constant summed amplitude: right when the two sides are nearly the
+        // same waveform, where equal power would bulge by 3 dB in the middle.
+        gainMain = 1.0 - g;
+        gainNext = g;
+    }
+    else
+    {
+        // Constant summed power, the default: right when the two sides are
+        // only loosely correlated (room tails, ensemble, noise).
+        //
+        // Same approximation the pan law in MixerStrips uses, and about four
+        // times cheaper than libm here, which matters because this runs per
+        // sample per voice while a fade is open. Over 0..pi/2 the error is
+        // ~7e-9, an order of magnitude under a 24-bit LSB, and a^2 + b^2 stays
+        // within 1e-9 of unity so the fade really is constant power.
+        //
+        // Keep these doubles. The Pade coefficients reach 1.15e10, well past
+        // float's exact-integer range, and evaluating them in float costs two
+        // decimal digits of accuracy.
+        const double angle = g * juce::MathConstants<double>::halfPi;
+        gainMain = juce::dsp::FastMathApproximations::cos (angle);
+        gainNext = juce::dsp::FastMathApproximations::sin (angle);
+    }
+
+    return true;
+}
+
 float Voice::readInterpolated (const juce::AudioBuffer<float>& source, int channel,
                                double position, bool wrapAtLoop) const
 {
@@ -269,6 +339,27 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
 
     const bool isLooping = isLoopingNow();
 
+    // Track the group's crossfade knob at block rate, but never adopt a new
+    // width while the read head is already inside a fade: the gains are a
+    // function of the width, so changing it mid-fade would step them.
+    if (isLooping)
+    {
+        double unusedA = 0.0, unusedB = 0.0;
+        if (! crossfadeGains (currentPosition, unusedA, unusedB))
+            crossfadeSamples = requestedCrossfadeSamples();
+    }
+    else
+    {
+        crossfadeSamples = 0.0;
+    }
+
+    const double loopLen = (double) activeSound->loopEnd - (double) activeSound->loopStart;
+
+    // With a crossfade running, the main head's interpolation partner is the
+    // real next sample rather than loopStart: the fade is what joins the seam,
+    // so wrapping here as well would apply the join twice.
+    const bool wrapForInterpolation = isLooping && crossfadeSamples <= 0.0;
+
     for (int s = 0; s < numSamples; ++s)
     {
         // Silence still owed by a positive start offset. The envelope is held
@@ -302,6 +393,11 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
         // than adding silence to it.
         const int pos = (int) currentPosition;
 
+        // Once per sample, not per channel: the fade gains depend only on the
+        // read position.
+        double gainMain = 1.0, gainNext = 0.0;
+        const bool fading = isLooping && crossfadeGains (currentPosition, gainMain, gainNext);
+
         if (pos >= 0 && pos < sourceBuffer.getNumSamples())
         {
             for (size_t i = 0; i + 1 < targetChannels.size(); i += 2)
@@ -313,7 +409,22 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
                     || srcCh < 0 || srcCh >= numSourceChannels)
                     continue;
 
-                const float sample = readInterpolated (sourceBuffer, srcCh, currentPosition, isLooping);
+                float sample = readInterpolated (sourceBuffer, srcCh, currentPosition,
+                                                 wrapForInterpolation);
+
+                if (fading)
+                {
+                    // The second head is simply one loop behind. As the main
+                    // head sweeps loopEnd-X to loopEnd, this one sweeps
+                    // loopStart-X to loopStart, which is exactly the material
+                    // the loop is about to jump into. No second accumulator is
+                    // needed, and it never wraps: it is reading pre-loop
+                    // material, not looping over it.
+                    const float behind = readInterpolated (sourceBuffer, srcCh,
+                                                           currentPosition - loopLen, false);
+                    sample = (float) (gainMain * sample + gainNext * behind);
+                }
+
                 outputBuffer.addSample (outCh, startSample + s, sample * envelopeVal * currentVelocity);
             }
         }

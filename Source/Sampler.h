@@ -226,6 +226,18 @@ private:
         sampleEnd. Looping is a group setting and a one-shot never loops. */
     bool isLoopingNow() const;
 
+    /** Longest crossfade this sound can afford, in source samples: it must be
+        shorter than the loop, and it reads backwards from loopStart, so it
+        cannot reach further back than sampleStart. */
+    double maxCrossfadeSamples() const;
+
+    /** The group's crossfade length clamped by maxCrossfadeSamples(). */
+    double requestedCrossfadeSamples() const;
+
+    /** Crossfade gains for a position inside the fade window. Returns false
+        when the position is not in the window, leaving the gains untouched. */
+    bool crossfadeGains (double position, double& gainMain, double& gainNext) const;
+
     /** Linearly interpolated read at a fractional position, returning silence
         outside the buffer. With wrapAtLoop, the sample following loopEnd - 1 is
         loopStart, so the interpolation across the seam is continuous.
@@ -251,6 +263,13 @@ private:
     int delaySamplesRemaining = 0;
 
     double currentPosition = 0.0;
+
+    /** Active loop crossfade length in source samples, 0 for a hard seam.
+        Refreshed per block from the group parameter, but never while the read
+        head is inside a fade, since changing the width mid-fade would jump the
+        gains and click. */
+    double crossfadeSamples = 0.0;
+
     double increment = 1.0;
     double currentSampleRate = 44100.0;
     float currentVelocity = 0.0f;
