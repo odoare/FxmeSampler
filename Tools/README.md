@@ -259,6 +259,7 @@ material. The keys keep their shape and change their subject: the nudge keys
 move a loop point instead of a stroke start.
 
 ```
+a / A        find a loop for this stroke / for every stroke in the file
 1 / 2 / 3    select loopStart / loopEnd / releaseStart
 . , > <      nudge it 1 ms / 10 ms         + / -  nudge it one sample
 click        stroke pane: put it there (coarse)
@@ -339,9 +340,68 @@ is the difference between seeing what you get and being surprised by it later.
 same reason they copy stroke starts exactly: linked files are one multitrack, so
 sample N is the same instant in each.
 
-The real loop *finder* — estimating f0 and constraining loop lengths to whole
-periods — is not here yet. `x` proposes the second half of the stroke with both
-ends snapped, as somewhere to start dragging, not as a proposal to trust.
+`x` proposes the second half of the stroke with both ends snapped, as somewhere
+to start dragging. `a` does the real work.
+
+## The loop finder
+
+`a` finds a loop for the selected stroke, `A` for every stroke in the file.
+
+The constraint that does the work is pitch. **A loop whose length is not a whole
+number of periods restarts the waveform at the wrong phase, and no crossfade
+hides that**: the fade blends two stretches that disagree, so it cancels rather
+than joins, and the loop sounds thin and beats at the wrap rate. Constraining
+the length to k periods and then choosing k by how well the two ends actually
+match is the whole algorithm.
+
+1. **f0 by YIN** over the sustain, not the whole stroke. YIN rather than plain
+   autocorrelation because autocorrelation's bias towards zero lag reports
+   octaves too high on harmonically rich material, and for loop finding that is
+   the expensive kind of wrong: an octave high is a loop half the length it
+   should be. Measured exact to within a cent on synthetic tones from 55 Hz to
+   880 Hz, and within a cent with 10% noise and vibrato added.
+2. **Candidate lengths** near every whole multiple of the period, within 12%.
+3. **Scored** by the normalised RMS difference between the two stretches the
+   crossfade would blend.
+4. **Chosen**: the *longest* whose score is either near the best or below 0.05
+   outright. The absolute floor matters more than it looks — on material that
+   loops well every candidate scores near zero, and a purely relative rule then
+   rejects a half-second loop for scoring 0.004 worse than a 27 ms one. That
+   difference is inaudible after a crossfade; the difference in length is the
+   difference between an instrument and a machine.
+
+**Two numbers are reported, because they answer different questions.**
+
+- `blend` is the score above. It is right for *choosing* between candidates, and
+  wrong for judging the winner: on a decaying note the amplitude drift across a
+  window dominates it, and drift is exactly what a crossfade is for. A loop
+  whose seam is inaudible can score 0.33.
+- `seam` is the step at the wrap divided by **the steepest step the material
+  takes by itself**. That is the yardstick throughout these tools: a seam no
+  steeper than the waveform's own maximum slope cannot be heard as a click,
+  because the waveform does it anyway. Under 1.0 is clean, under 3.0 wants a
+  crossfade, above that the material may simply not loop.
+
+**Unpitched material is recognised, not obeyed.** YIN returns its best lag for
+noise too, and that lag means nothing; constraining lengths to multiples of a
+meaningless period is worse than not constraining them at all. Below a
+confidence of 0.3 the search runs unconstrained and says so, naming the estimate
+it rejected. The gate sits at 0.3 from measurement: a genuine repeat period on a
+short decaying bass note scores 0.38, band-limited noise scores 0.08, and a gate
+of 0.5 rejects the first along with the second.
+
+Three periods is the minimum, but it is a musical minimum rather than a
+technical one, so a note too short for three gets two and is told so. A stroke
+with no sustain at all — any drum in this repository — is refused with the
+reason.
+
+Worth knowing: the period the finder wants is **the waveform's repeat period,
+not the note's nominal pitch**. The bass in `Kits/BassTest` is a nominal A2
+(110 Hz) whose consecutive cycles differ enough that the waveform only truly
+repeats at 55.7 Hz — correlation at one 110 Hz period is 0.22 against 0.51 at
+two. Constraining the loop to the longer period took the seam from 0.27 to 0.05
+of the material's own step. A finder that "corrected" that to 110 Hz would have
+made the loop worse.
 
 Run the editor with **no folder argument** and it asks for one in a dialog. On
 quit it offers a second dialog: save the state, write `mapping.xml`, or neither.
@@ -360,7 +420,7 @@ correspondence would otherwise silently map the wrong stroke to the wrong layer.
 ## Tests
 
     python3 Tools/mapping_build.py --selftest     # detection + writer, 53 checks
-    python3 Tools/MappingEditor.py <folder> --selftest   # editing + loops, 98 checks
+    python3 Tools/MappingEditor.py <folder> --selftest   # editing + loops, 131 checks
 
 The detection self-test needs no audio: it synthesises takes of decaying noise
 bursts at known positions, across a range of lead-in lengths and stroke counts,

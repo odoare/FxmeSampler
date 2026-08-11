@@ -34,6 +34,9 @@ Press L for loop mode, where the same keys author loop points instead:
                  seam pane: left of the wrap moves loopEnd, right of it moves
                  loopStart, both meaning "put the seam here" (about one
                  sample per pixel)
+    a / A        find a loop for this stroke / for every stroke in the file,
+                 by estimating f0 and matching ends a whole number of periods
+                 apart
     z            snap it to the nearest rising zero crossing
     c            cycle the preview crossfade (0, 5, 20, 50, 100 ms)
     e            toggle the preview release: envelope or release region
@@ -98,6 +101,7 @@ KEYS = """
     click      stroke pane: put it there (coarse)
                seam pane: left of the wrap moves loopEnd, right moves
                loopStart, both "put the seam here" (~1 sample per pixel)
+    a / A      find a loop for this stroke / for the whole file (f0-based)
     z          snap to the nearest rising zero crossing
     c          cycle the preview crossfade       e  envelope / region release
     space      play it                           x  create / clear the loop
@@ -138,6 +142,7 @@ class Editor:
         self.loop_point = "loop_start"
         self.crossfade_index = 2          # 20 ms
         self.release_mode = "loop"
+        self.loop_note = ""               # what the finder last reported
 
         self.mono = None
         self.rate = 44100
@@ -487,6 +492,43 @@ class Editor:
             self.message = (f"no rising zero crossing within {SNAP_MS:g} ms of "
                             f"{LOOP_LABELS[self.loop_point]}; left where it was")
 
+    def auto_loop(self, whole_file=False):
+        """Let the finder propose loop points: pitch first, then the best
+        matching pair of ends whose separation is a whole number of periods.
+
+        It replaces whatever is there. Loop points are cheap to redo and the
+        alternative is a key that silently does nothing on any stroke that
+        already has a loop, which is every stroke you have already looked at."""
+        targets = list(self.hits) if whole_file else ([self.hit] if self.hit else [])
+        if not targets:
+            return
+
+        found, refused = 0, []
+        for h in targets:
+            suggestion, note = ml.find_loop(self.mono, self.rate, h)
+            if suggestion is None:
+                refused.append(note)
+                continue
+            h.loop_start = suggestion.loop_start
+            h.loop_end = suggestion.loop_end
+            h.release_start = suggestion.loop_end
+            h.locked = True
+            found += 1
+            if h is self.hit or not whole_file:
+                self.loop_note = note
+
+        if found:
+            self.dirty = True
+
+        if whole_file:
+            self.message = f"auto-looped {found}/{len(targets)} strokes"
+            if refused:
+                self.message += f"   ({refused[0]})"
+        elif found:
+            self.message = self.loop_note
+        else:
+            self.message = refused[0] if refused else "no loop found"
+
     def toggle_loop_points(self):
         """Create a loop on a stroke that has none, or remove the one it has.
 
@@ -606,10 +648,14 @@ class Editor:
         self.hit_index = 0
         self.load_audio()
         self.message = ""
+        # The finder's report belongs to the stroke it was run on. Carrying it
+        # across would credit one stroke's pitch and match to another.
+        self.loop_note = ""
 
     def step_hit(self, delta):
         if self.hits:
             self.hit_index = (self.hit_index + delta) % len(self.hits)
+        self.loop_note = ""
 
     def save(self):
         ml.save_state(self.state_path, self.entries, self.takes, self.p)
@@ -770,6 +816,8 @@ class Editor:
                          f"   |   moving {LOOP_LABELS[self.loop_point]}"
                          f"   |   preview crossfade {self.crossfade_ms:g} ms "
                          f"(room for {room:.0f} ms), release {self.release_mode}")
+                if self.loop_note:
+                    head += f"\nfinder: {self.loop_note}"
                 problems = ml.loop_warnings(h)
                 if problems:
                     head += "\n!! " + "; ".join(problems)
@@ -872,6 +920,8 @@ class Editor:
                 " ": self.preview,
                 "m": lambda: self.copy_loop_from_reference(whole_file=False),
                 "M": lambda: self.copy_loop_from_reference(whole_file=True),
+                "a": lambda: self.auto_loop(whole_file=False),
+                "A": lambda: self.auto_loop(whole_file=True),
             })
         else:
             actions.update({
@@ -1421,6 +1471,101 @@ def selftest(folder, state_path):
           region_out.size >= 0.3 * synth_rate + (synth.end - synth.release_start) - 2)
     check("and joins the tail without a step",
           worst_step(region_out) < 1.3 * natural)
+
+    # ── the loop finder ────────────────────────────────────────────────────
+    #
+    # Pitch first, on tones whose f0 is known exactly.
+    for hz in (55.0, 110.0, 220.0, 440.0):
+        tt = np.arange(int(1.2 * synth_rate)) / synth_rate
+        rich = sum((0.65 ** k) * np.sin(2 * np.pi * (k + 1) * hz * tt) for k in range(5))
+        rich = (rich / np.abs(rich).max() * 0.8).astype(np.float32)
+        got, conf = ml.estimate_f0(rich, synth_rate, 0, len(rich))
+        cents = abs(1200.0 * np.log2(got / hz)) if got else 1e9
+        check(f"f0 of a {hz:g} Hz tone within 5 cents (got {got:.1f})", cents < 5.0)
+        check(f"and is confident about it ({conf:.2f})", conf > 0.8)
+
+    # Noise has no f0, and saying it does is worse than saying nothing: loop
+    # lengths would then be constrained to multiples of a meaningless number.
+    rng = np.random.default_rng(7)
+    noise = (rng.standard_normal(60000) * 0.3).astype(np.float32)
+    _, noise_conf = ml.estimate_f0(noise, synth_rate, 0, len(noise))
+    check(f"noise gets a low pitch confidence ({noise_conf:.2f})", noise_conf < 0.5)
+
+    # The finder itself, on a decaying pitched note.
+    def pitched(hz, seconds=1.2):
+        tt = np.arange(int(seconds * synth_rate)) / synth_rate
+        y = sum((0.65 ** k) * np.sin(2 * np.pi * (k + 1) * hz * tt) for k in range(5))
+        y *= np.minimum(1.0, tt / 0.02) * (0.75 + 0.25 * np.exp(-2.0 * tt))
+        y = (y / np.abs(y).max() * 0.8).astype(np.float32)
+        return np.concatenate([np.zeros(2000, np.float32), y,
+                               np.zeros(4000, np.float32)])
+
+    for hz in (55.0, 110.0, 440.0):
+        buf = pitched(hz)
+        probe = ml.Hit(start=1900, end=len(buf))
+        found, why = ml.find_loop(buf, synth_rate, probe)
+        check(f"a loop is found at {hz:g} Hz ({why})", found is not None)
+        if found is None:
+            continue
+
+        # The point of the whole exercise: a whole number of periods. The period
+        # is rate/f0 and so is not a whole number of samples, which is why this
+        # is a tolerance and not an equality.
+        off_by = abs(found.periods - round(found.periods))
+        check(f"{hz:g} Hz: the length is a whole number of periods "
+              f"({found.periods:.3f})", off_by < 0.02)
+        check(f"{hz:g} Hz: the loop is long enough to sound like an instrument "
+              f"({(found.loop_end - found.loop_start) / synth_rate * 1000:.0f} ms)",
+              found.loop_end - found.loop_start > 0.15 * synth_rate)
+        check(f"{hz:g} Hz: the ends match", found.cost < 0.1)
+        check(f"{hz:g} Hz: the loop sits inside the stroke",
+              probe.start <= found.loop_start < found.loop_end <= probe.end)
+
+        # And the claim that matters: with the phase right, the seam is clean
+        # before any crossfade is applied at all.
+        probe.loop_start, probe.loop_end = found.loop_start, found.loop_end
+        probe.release_start = found.loop_end
+        out = ml.render_loop(buf, synth_rate, probe, crossfade_ms=0.0, hold_s=2.0)
+        wrap = probe.loop_end - probe.start
+        peak = float(np.abs(buf).max())
+        step = float(np.max(np.abs(np.diff(out[max(0, wrap - 3):wrap + 3])))) / peak
+        own = float(np.max(np.abs(np.diff(buf)))) / peak
+        check(f"{hz:g} Hz: the seam needs no crossfade "
+              f"({step:.4f} vs the material's own {own:.4f})", step <= own)
+
+    # Unpitched material must not be given a fake period.
+    from scipy.signal import butter, filtfilt
+    b, a = butter(4, [300 / (synth_rate / 2), 3000 / (synth_rate / 2)], btype="band")
+    band = (filtfilt(b, a, rng.standard_normal(60000)) * 0.5).astype(np.float32)
+    band *= np.minimum(1.0, np.arange(len(band)) / 1000.0)
+    hiss = np.concatenate([np.zeros(2000, np.float32), band, np.zeros(4000, np.float32)])
+    probe = ml.Hit(start=1900, end=len(hiss))
+    found, why = ml.find_loop(hiss, synth_rate, probe)
+    check("unpitched material is looped without a period constraint, and says so",
+          found is not None and found.f0 == 0.0 and "unconstrained" in why)
+    # Noise cannot match itself across a loop, so the blend figure must show it.
+    # The seam step can still be small, which is why the two are reported
+    # separately: a crossfade between two unrelated stretches of noise does not
+    # click, it just does not sound like one continuous stretch of noise.
+    check("its poor blend is reported rather than hidden",
+          found is not None and found.cost > 0.5 and "blend" in why)
+    check("and the seam is judged on its own terms",
+          found is not None and 0.0 < found.seam_ratio < 100.0)
+
+    # A drum stroke has no sustain to loop. Refusing is the right answer.
+    short = ml.Hit(start=0, end=600)
+    found, why = ml.find_loop(tone[:600], synth_rate, short)
+    check("a stroke with no sustain is refused with a reason",
+          found is None and "not enough sustain" in why)
+
+    # The editor keys.
+    ed.hit_index = 1
+    ed.loop_note = ""
+    ed.auto_loop(whole_file=False)
+    check("a on real material either finds a loop or explains itself",
+          bool(ed.message))
+    ed.step_hit(+1)
+    check("stepping strokes clears the finder's report", ed.loop_note == "")
 
     # The seam view, on the same signal and for the same reason.
     view = ml.seam_view(tone, synth, synth_rate, crossfade_ms=0.0)

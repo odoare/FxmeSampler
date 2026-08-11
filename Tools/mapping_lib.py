@@ -784,6 +784,308 @@ def seam_view(mono, hit, sample_rate, crossfade_ms=0.0, shape="equalPower", span
     return x, heard, naive, ahead
 
 
+# ─── Finding a loop ────────────────────────────────────────────────────────
+#
+# The constraint that does the work here is pitch. A loop whose length is not a
+# whole number of periods restarts the waveform at the wrong phase, and no
+# crossfade hides that: the fade blends two stretches that disagree, so it
+# cancels rather than joins, and the loop sounds thin and beats at the wrap
+# rate. Constraining the length to k periods and then choosing k by how well the
+# two ends actually match is the whole algorithm.
+
+
+@dataclass
+class LoopSuggestion:
+    loop_start: int
+    loop_end: int
+    f0: float = 0.0            # Hz, 0 when pitch could not be established
+    confidence: float = 0.0    # 0 to 1, from the YIN aperiodicity
+    periods: float = 0.0       # loop length in periods of f0
+    cost: float = 1.0          # 0 identical ends, 1 as different as the signal
+    crossfade_ms: float = 0.0  # the window the ends were matched over
+    seam_ratio: float = 0.0    # the step at the wrap, over the material's own
+    note: str = ""
+
+
+def estimate_f0(mono, sample_rate, start, end, fmin=30.0, fmax=1500.0,
+                threshold=0.15, octave_margin=1.15):
+    """Fundamental frequency by YIN, as (f0_hz, confidence).
+
+    Returns (0.0, 0.0) when there is not enough material or nothing periodic.
+    YIN rather than plain autocorrelation because autocorrelation's bias towards
+    tau=0 makes it report octaves too high on material with strong harmonics,
+    which for loop finding is the expensive kind of wrong: a loop one octave
+    short is a loop half the length it should be."""
+    lo_tau = max(2, int(sample_rate / fmax))
+    hi_tau = int(sample_rate / fmin)
+
+    seg = np.asarray(mono[int(start):int(end)], dtype=np.float64)
+    # Two windows of the longest period, plus the window itself: less than this
+    # and the longest lags are estimated from almost no data.
+    n = len(seg) - hi_tau
+    if n < hi_tau or n < 64:
+        return 0.0, 0.0
+    if not np.any(seg):
+        return 0.0, 0.0
+
+    window = seg[:n]
+    target_energy = float(np.dot(window, window))
+    if target_energy <= 0.0:
+        return 0.0, 0.0
+
+    # d(tau) = sum_j (x[j] - x[j+tau])^2, expanded so one correlation does it.
+    squares = np.concatenate(([0.0], np.cumsum(seg * seg)))
+    lagged_energy = squares[n + np.arange(hi_tau + 1)] - squares[np.arange(hi_tau + 1)]
+    dot = np.correlate(seg[:n + hi_tau], window, mode="valid")[:hi_tau + 1]
+    d = target_energy + lagged_energy - 2.0 * dot
+
+    # Cumulative mean normalisation: this is what stops tau=0 winning.
+    taus = np.arange(1, hi_tau + 1)
+    running = np.cumsum(d[1:]) / taus
+    dn = np.ones(hi_tau + 1)
+    good = running > 0.0
+    dn[1:][good] = d[1:][good] / running[good]
+
+    search = dn[lo_tau:hi_tau + 1]
+    if search.size == 0:
+        return 0.0, 0.0
+
+    # First dip below the threshold, not the deepest: the deepest is often an
+    # octave down, and the first acceptable one is the true period.
+    below = np.nonzero(search < threshold)[0]
+    if below.size:
+        tau = int(below[0]) + lo_tau
+    else:
+        # Nothing clean enough to cross the threshold, which is normal on a
+        # short or decaying note. Falling back to the deepest dip is what makes
+        # a detector report an octave too low: a sub-octave lag lines up whole
+        # cycles as well as the true period does and often scores a shade
+        # better. So take the shortest lag that scores nearly as well, not the
+        # best one.
+        best = float(np.min(search))
+        near = np.nonzero(search <= best * octave_margin)[0]
+        tau = int(near[0] if near.size else np.argmin(search)) + lo_tau
+
+    # Settle into the bottom of whichever dip was chosen.
+    while tau + 1 <= hi_tau and dn[tau + 1] < dn[tau]:
+        tau += 1
+
+    # Parabolic interpolation for a sub-sample period.
+    if 1 <= tau < hi_tau:
+        a, b, c = d[tau - 1], d[tau], d[tau + 1]
+        denom = a - 2.0 * b + c
+        if denom != 0.0:
+            tau = tau + 0.5 * (a - c) / denom
+
+    if tau <= 0:
+        return 0.0, 0.0
+
+    confidence = float(np.clip(1.0 - dn[int(round(tau))], 0.0, 1.0))
+    return float(sample_rate) / float(tau), confidence
+
+
+def sustain_region(mono, hit, sample_rate, attack_skip_ms=30.0):
+    """The part of a stroke worth looping: past the attack, before the sound has
+    gone. Looping across the attack would repeat the transient."""
+    end = sounding_end(mono, hit)
+    seg = np.abs(mono[int(hit.start):int(end)])
+    if seg.size == 0:
+        return int(hit.start), int(end)
+
+    peak_at = int(hit.start) + int(np.argmax(seg))
+    lo = peak_at + int(attack_skip_ms * sample_rate / 1000.0)
+    return min(lo, max(int(hit.start), int(end) - 1)), int(end)
+
+
+def _match_costs(mono, ends, target_start, width):
+    """Normalised RMS difference between the `width` samples ending at each
+    position in `ends` and the `width` samples ending at target_start + width.
+
+    This is the quantity that decides both questions at once. At width 1 it is
+    the height of the step at the seam; at the crossfade width it is how well
+    the two stretches the crossfade blends agree, and a crossfade between
+    stretches that disagree cancels instead of joining."""
+    x = np.asarray(mono, dtype=np.float64)
+    target = x[target_start:target_start + width]
+    energy = float(np.dot(target, target))
+    if energy <= 0.0:
+        return np.ones(len(ends))
+
+    lo, hi = int(ends[0]), int(ends[-1])
+    region = x[lo - width:hi]
+    if len(region) < width:
+        return np.ones(len(ends))
+
+    dot = np.correlate(region, target, mode="valid")
+    squares = np.concatenate(([0.0], np.cumsum(x * x)))
+    window_energy = squares[ends] - squares[ends - width]
+
+    diff = window_energy - 2.0 * dot[:len(ends)] + energy
+    return np.sqrt(np.maximum(diff, 0.0) / energy)
+
+
+def find_loop(mono, sample_rate, hit, min_periods=3, min_loop_ms=20.0,
+              period_tolerance=0.12, longer_is_better=1.25, min_confidence=0.3,
+              good_enough=0.05):
+    """Propose a loop for one stroke, or explain why it cannot.
+
+    The length is constrained to a whole number of periods of the estimated f0,
+    then chosen among those by how well the two ends match. Among candidates
+    that match nearly as well as the best, the longest wins: a three-period loop
+    that matches perfectly still sounds static and machine-like, and the extra
+    length costs nothing.
+
+    With no reliable f0 the search still runs, unconstrained, and says so. That
+    is the honest answer for a cymbal: there is no period to be a multiple of."""
+    lo, hi = sustain_region(mono, hit, sample_rate)
+    f0, confidence = estimate_f0(mono, sample_rate, lo, hi)
+
+    # YIN always returns its best lag, even for noise, where that lag means
+    # nothing. Constraining loop lengths to multiples of a meaningless period is
+    # worse than not constraining them at all, so unpitched material has to be
+    # recognised and let through unconstrained rather than quietly obeyed.
+    #
+    # The gate sits where it does from measurement, not taste. A real repeat
+    # period on a short decaying bass note (55 ms of sustain, six cycles) scores
+    # 0.38; band-limited noise scores 0.08. A gate of 0.5 rejects the first
+    # along with the second.
+    period = sample_rate / f0 if (f0 > 0.0 and confidence >= min_confidence) else 0.0
+
+    # The window the two ends are compared over, which is also the crossfade
+    # that will work: one period if there is one, 20 ms otherwise.
+    width = int(period) if period >= 16.0 else int(0.020 * sample_rate)
+    width = max(8, min(width, (hi - lo) // 4))
+
+    # Three periods is a musical minimum rather than a technical one: shorter
+    # loops start to sound like a pitch of their own. But refusing outright is
+    # worse than offering two, so a short note gets what fits and is told.
+    room = hi - lo
+    shortened = 0
+    periods_wanted = min_periods
+    while periods_wanted > 1:
+        needed = max(int(min_loop_ms * sample_rate / 1000.0),
+                     int(periods_wanted * period) if period else 0) + 2 * width
+        if needed <= room:
+            break
+        periods_wanted -= 1
+        shortened += 1
+
+    min_length = max(int(min_loop_ms * sample_rate / 1000.0),
+                     int(periods_wanted * period) if period else 0)
+
+    # loopEnd is searched over the last part of the sustain, so a bad final
+    # moment is not forced on the loop. loopStart needs a whole comparison
+    # window of sustain in front of it.
+    end_lo = max(lo + width + min_length, hi - max(width, int(period) * 2 or width))
+    ends = np.arange(end_lo, hi + 1)
+    if ends.size == 0 or room < min_length + 2 * width:
+        return None, (f"not enough sustain to loop: {room} samples after the "
+                      f"attack, need {min_length + 2 * width}")
+
+    # Every (loopStart, loopEnd) worth considering, scored, then one selection
+    # rule applied to the lot. Choosing per loopEnd and then choosing among the
+    # winners applies the rule twice and can pick a candidate that is neither
+    # the best match nor the longest.
+    all_costs, all_starts, all_ends = [], [], []
+    for end in ends[::max(1, len(ends) // 12)]:
+        starts_lo = lo + width
+        starts_hi = end - min_length
+        if starts_hi <= starts_lo:
+            continue
+
+        starts = np.arange(starts_lo, starts_hi + 1)
+        costs = _match_costs(mono, starts, end - width, width)
+        lengths = end - starts
+
+        if period > 0.0:
+            # The constraint: keep only lengths within a fraction of a period of
+            # a whole number of them.
+            phase = np.abs(((lengths / period + 0.5) % 1.0) - 0.5)
+            costs = np.where(phase <= period_tolerance, costs, np.inf)
+
+        keep = np.isfinite(costs)
+        if not np.any(keep):
+            continue
+
+        all_costs.append(costs[keep])
+        all_starts.append(starts[keep])
+        all_ends.append(np.full(int(keep.sum()), end))
+
+    if not all_costs:
+        return None, "no loop length matched: nothing periodic enough to wrap on"
+
+    costs = np.concatenate(all_costs)
+    starts = np.concatenate(all_starts)
+    ends_of = np.concatenate(all_ends)
+    lengths = ends_of - starts
+
+    # Two ways to be acceptable, and the absolute one matters more than it
+    # looks. On material that loops well every candidate scores near zero, and a
+    # purely relative band then rejects a half-second loop for being 0.004 worse
+    # than a 27 ms one. The difference between those two matches is inaudible
+    # after a crossfade; the difference between their lengths is the difference
+    # between an instrument and a machine.
+    floor = float(np.min(costs))
+    acceptable = np.nonzero(costs <= max(good_enough, floor * longer_is_better))[0]
+    pick = acceptable[np.argmax(lengths[acceptable])]
+
+    cost = float(costs[pick])
+    loop_start, loop_end = int(starts[pick]), int(ends_of[pick])
+    length = int(lengths[pick])
+
+    # Two different questions, and they need two different measurements.
+    #
+    # cost is over a whole comparison window, which is right for *choosing*
+    # among candidates: it prefers ends that agree in phase and in timbre. It is
+    # wrong for judging the result, because on a decaying note the amplitude
+    # drift across a window dominates it, and drift is what a crossfade is for.
+    # A loop whose seam is inaudible can score a cost of 0.33.
+    #
+    # What is audible at the wrap is the step, and the yardstick for a step is
+    # the steepest step the material takes by itself. A seam no steeper than
+    # that cannot be heard as a click, because the waveform does it anyway.
+    step = abs(float(mono[loop_start]) - float(mono[loop_end - 1]))
+    natural = float(np.max(np.abs(np.diff(np.asarray(mono[lo:hi], dtype=np.float64)))))
+    seam_ratio = step / natural if natural > 0.0 else 0.0
+
+    if seam_ratio <= 1.0:
+        verdict = "clean"
+    elif seam_ratio <= 3.0:
+        verdict = "usable, crossfade it"
+    else:
+        verdict = "POOR, this may not loop"
+
+    suggestion = LoopSuggestion(
+        # f0 is the pitch this loop was built on, so it is 0 when none was
+        # used. Reporting the measurement that was rejected would read as a
+        # pitch the caller could rely on; the confidence says why it was not.
+        loop_start=loop_start, loop_end=loop_end,
+        f0=f0 if period else 0.0, confidence=confidence,
+        periods=(length / period) if period else 0.0, cost=cost,
+        crossfade_ms=width / sample_rate * 1000.0, seam_ratio=seam_ratio)
+
+    if period:
+        suggestion.note = (f"f0 {f0:.1f} Hz (conf {confidence:.2f}), "
+                           f"{length / period:.2f} periods, "
+                           f"{length / sample_rate * 1000.0:.0f} ms, "
+                           f"seam {seam_ratio:.2f}x natural ({verdict}), "
+                           f"blend {cost:.2f}")
+        if shortened:
+            suggestion.note += (f"; only {periods_wanted} periods fit in this "
+                                f"note, wanted {min_periods}")
+    else:
+        # Name the rejected estimate rather than dropping it: "0.08 confidence
+        # at 500 Hz" is what tells you this is genuinely unpitched material and
+        # not a detector that gave up.
+        suggestion.note = (f"no reliable pitch (best guess {f0:.0f} Hz at "
+                           f"confidence {confidence:.2f}), length unconstrained; "
+                           f"{length / sample_rate * 1000.0:.0f} ms, "
+                           f"seam {seam_ratio:.2f}x natural ({verdict}), "
+                           f"blend {cost:.2f}")
+
+    return suggestion, suggestion.note
+
+
 # ─── Linking ───────────────────────────────────────────────────────────────
 
 def _mic_stripped(name, prefixes):

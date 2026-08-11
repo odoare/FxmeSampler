@@ -35,15 +35,22 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/FxmeFX/lib/FxmeTools/cmake/FxmeTools.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/FxmeFX/Source/Common/CommonAssets.cmake)
 
 # ── Kit plugins ────────────────────────────────────────────────────────────
-# Build all kits by default. To build a single kit:
+# Build the shipping kits by default. To build a single kit:
 #   cmake -B build -DKIT=BlackWidow
 #   cmake -B build -DKIT=Century
-set(KIT "" CACHE STRING "Build only this kit (leave empty to build all)")
+#   cmake -B build -DKIT=BassTest
+set(KIT "" CACHE STRING "Build only this kit (leave empty to build the default set)")
 
-set(_all_kits BlackWidow Century)
+# Every kit that -DKIT= will accept, and the subset built when KIT is empty.
+# They differ because BassTest is a test instrument for the loop machinery, not
+# a product: the release workflow builds this whole project, so putting it in
+# the default set would compile a third plugin into every release for something
+# that is never packaged. Move it into _default_kits if that changes.
+set(_all_kits     BlackWidow Century BassTest)
+set(_default_kits BlackWidow Century)
 
 if(KIT STREQUAL "")
-    foreach(_kit IN LISTS _all_kits)
+    foreach(_kit IN LISTS _default_kits)
         add_subdirectory(Kits/${_kit})
     endforeach()
 else()
