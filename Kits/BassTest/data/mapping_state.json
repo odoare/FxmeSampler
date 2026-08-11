@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "params": {
+    "n_fft": 1024,
+    "hop": 128,
+    "baseline_s": 0.5,
+    "min_gap_ms": 120.0,
+    "head_over_floor": 8.0,
+    "head_ms": 20.0,
+    "peak_back_ms": 15.0,
+    "peak_fwd_ms": 40.0,
+    "foot_back_ms": 30.0,
+    "smooth_ms": 0.5,
+    "foot_rel_peak": 0.02,
+    "foot_rel_floor": 3.0,
+    "pre_roll_ms": 0.0,
+    "energy_ms": 200.0,
+    "align_members": false,
+    "link_tolerance_ms": 8.0
+  },
+  "takes": [],
+  "files": [
+    {
+      "filename": "1 Bass A2 0 45 45 45.wav",
+      "expected": 1,
+      "group": "Bass",
+      "family": "A2",
+      "mute_group": 0,
+      "base_pitch": 45,
+      "note_low": 45,
+      "note_high": 45,
+      "n_channels": 2,
+      "sample_rate": 44100,
+      "n_frames": 7087,
+      "starts_at_zero": false,
+      "hits": [
+        {
+          "start": 22,
+          "end": 7087,
+          "rms": 0.28457439674371543,
+          "peak": 0.79296875,
+          "locked": true,
+          "rank": 0,
+          "loop_start": 4090,
+          "loop_end": 5688,
+          "release_start": 5688
+        }
+      ],
+      "warnings": [
+        "1 locked start(s) kept from the state file"
+      ]
+    }
+  ]
+}

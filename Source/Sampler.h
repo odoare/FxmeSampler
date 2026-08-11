@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "ResourceProvider.h"
 #include <vector>
 #include <memory>
 
@@ -395,8 +396,13 @@ public:
      * @brief Loads sample configuration from XML data.
      * @param xmlData Pointer to the XML data.
      * @param xmlSize Size of the XML data.
+     * @param resources Where the wav files named by the mapping come from.
+     *        Defaults to the binary's own embedded set, which is what every
+     *        shipping kit uses; the dev host passes a folder instead. Must
+     *        outlive this Sampler: Sound::data points into it.
      */
-    void loadSamplesFromXml (const void* xmlData, int xmlSize);
+    void loadSamplesFromXml (const void* xmlData, int xmlSize,
+                             const fxsampler::ResourceProvider& resources = fxsampler::embeddedResources());
 
     /**
      * @brief Assigns parameters from APVTS to sample groups.

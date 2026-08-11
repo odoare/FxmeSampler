@@ -10,7 +10,19 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-FxmeSamplerAudioProcessor::FxmeSamplerAudioProcessor()
+// The dev host points this at the kit folder's presets/ directory, so a preset
+// saved while testing lands next to the mapping it belongs to and is embedded
+// as a factory preset when the kit is compiled.
+static juce::File resolveUserPresetDirectory (const juce::File& requested)
+{
+    if (requested != juce::File())
+        return requested;
+
+    return fxme::PresetManager::getDefaultUserPresetDirectory ("FxmeSampler", JucePlugin_Name);
+}
+
+FxmeSamplerAudioProcessor::FxmeSamplerAudioProcessor (const fxsampler::ResourceProvider& resources,
+                                                      const juce::File& userPresetDirectory)
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                        .withOutput ("Main Output", juce::AudioChannelSet::stereo(), true)
@@ -18,29 +30,30 @@ FxmeSamplerAudioProcessor::FxmeSamplerAudioProcessor()
                        .withOutput ("Aux 2", juce::AudioChannelSet::stereo(), true)
                        .withOutput ("Aux 3", juce::AudioChannelSet::stereo(), true)
                        ),
-       apvts (*this, nullptr, "Parameters", createParameterLayout()),
+       apvts (*this, nullptr, "Parameters", createParameterLayout (resources)),
        presetManager (apvts,
-                      fxme::PresetManager::getDefaultUserPresetDirectory ("FxmeSampler", JucePlugin_Name),
+                      resolveUserPresetDirectory (userPresetDirectory),
                       BinaryData::namedResourceList,
                       BinaryData::namedResourceListSize,
                       BinaryData::getNamedResource)
 #else
-     : apvts (*this, nullptr, "Parameters", createParameterLayout()),
+     : apvts (*this, nullptr, "Parameters", createParameterLayout (resources)),
        presetManager (apvts,
-                      fxme::PresetManager::getDefaultUserPresetDirectory ("FxmeSampler", JucePlugin_Name),
+                      resolveUserPresetDirectory (userPresetDirectory),
                       BinaryData::namedResourceList,
                       BinaryData::namedResourceListSize,
                       BinaryData::getNamedResource)
 #endif
 {
-    // Load the mapping XML from BinaryData
+    // The mapping is just another resource, so an embedded kit and a folder on
+    // disk are found the same way.
     int xmlSize = 0;
-    const char* xmlData = BinaryData::getNamedResource ("mapping_xml", xmlSize);
-    
+    const char* xmlData = resources.find ("mapping.xml", xmlSize);
+
     if (xmlData != nullptr) {
-        sampler.loadSamplesFromXml (xmlData, xmlSize);
+        sampler.loadSamplesFromXml (xmlData, xmlSize, resources);
         sampler.assignParameters (apvts);
-        mixer.loadFromXml (xmlData, xmlSize);
+        mixer.loadFromXml (xmlData, xmlSize, resources);
         mixer.assignParameters (apvts);
     }
 
@@ -278,21 +291,22 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new FxmeSamplerAudioProcessor();
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout FxmeSamplerAudioProcessor::createParameterLayout()
+juce::AudioProcessorValueTreeState::ParameterLayout
+    FxmeSamplerAudioProcessor::createParameterLayout (const fxsampler::ResourceProvider& resources)
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
     int xmlSize = 0;
-    const char* xmlData = BinaryData::getNamedResource ("mapping_xml", xmlSize);
+    const char* xmlData = resources.find ("mapping.xml", xmlSize);
 
     if (xmlData != nullptr && xmlSize > 0)
     {
         // Create temporary Sampler and Mixer to parse XML and generate parameters
         Sampler tempSampler;
         Mixer tempMixer;
-        tempSampler.loadSamplesFromXml (xmlData, xmlSize);
-        tempMixer.loadFromXml (xmlData, xmlSize);
-        
+        tempSampler.loadSamplesFromXml (xmlData, xmlSize, resources);
+        tempMixer.loadFromXml (xmlData, xmlSize, resources);
+
         tempSampler.addParameters (params);
         tempMixer.addParameters (params);
     }

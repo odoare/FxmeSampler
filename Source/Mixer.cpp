@@ -12,6 +12,24 @@
 #include "EffectChainReverb.h"
 
 //==============================================================================
+// Every img= attribute in a mapping goes through here. Returns a null Image
+// when the name resolves to nothing, which the strips already treat as "no
+// artwork".
+static juce::Image loadImageResource (const fxsampler::ResourceProvider& resources,
+                                      const juce::String& imageName)
+{
+    if (imageName.isEmpty())
+        return {};
+
+    int dataSize = 0;
+
+    if (auto* data = resources.find (imageName, dataSize))
+        return juce::ImageCache::getFromMemory (data, dataSize);
+
+    return {};
+}
+
+//==============================================================================
 void Mixer::prepare (double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
@@ -22,7 +40,8 @@ void Mixer::prepare (double sampleRate, int samplesPerBlock)
     masterStrip.prepare (sampleRate, samplesPerBlock);
 }
 
-void Mixer::loadFromXml (const void* xmlData, int xmlSize)
+void Mixer::loadFromXml (const void* xmlData, int xmlSize,
+                         const fxsampler::ResourceProvider& resources)
 {
     if (xmlData == nullptr || xmlSize <= 0)
         return;
@@ -39,23 +58,7 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize)
     if (welcomeNode != nullptr)
     {
         welcomeText = welcomeNode->getStringAttribute ("text");
-        juce::String imgName = welcomeNode->getStringAttribute ("img");
-        if (imgName.isNotEmpty())
-        {
-            juce::String resourceName = imgName.replaceCharacter ('.', '_').replaceCharacter (' ', '_');
-            int dataSize = 0;
-            const char* data = BinaryData::getNamedResource (resourceName.toRawUTF8(), dataSize);
-
-            if (data == nullptr)
-            {
-                for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
-                    if (resourceName.equalsIgnoreCase (BinaryData::namedResourceList[i]))
-                        { data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], dataSize); break; }
-            }
-
-            if (data != nullptr)
-                welcomeImage = juce::ImageCache::getFromMemory (data, dataSize);
-        }
+        welcomeImage = loadImageResource (resources, welcomeNode->getStringAttribute ("img"));
     }
 
     auto* masterNode = root->getChildByName ("Master");
@@ -81,22 +84,8 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize)
             }
         }
 
-        if (imgName.isNotEmpty())
-        {
-            juce::String resourceName = imgName.replaceCharacter ('.', '_').replaceCharacter (' ', '_');
-            int dataSize = 0;
-            const char* data = BinaryData::getNamedResource (resourceName.toRawUTF8(), dataSize);
-
-            if (data == nullptr)
-            {
-                for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
-                    if (resourceName.equalsIgnoreCase (BinaryData::namedResourceList[i]))
-                        { data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], dataSize); break; }
-            }
-
-            if (data != nullptr)
-                masterStrip.setImage (juce::ImageCache::getFromMemory (data, dataSize));
-        }
+        if (auto image = loadImageResource (resources, imgName); image.isValid())
+            masterStrip.setImage (image);
     }
 
     auto* mixerNode = root->getChildByName ("Mixer");
@@ -180,22 +169,8 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize)
                     }
                 }
 
-                if (imgName.isNotEmpty())
-                {
-                    juce::String resourceName = imgName.replaceCharacter ('.', '_').replaceCharacter (' ', '_');
-                    int dataSize = 0;
-                    const char* data = BinaryData::getNamedResource (resourceName.toRawUTF8(), dataSize);
-
-                    if (data == nullptr)
-                    {
-                        for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
-                            if (resourceName.equalsIgnoreCase (BinaryData::namedResourceList[i]))
-                                { data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], dataSize); break; }
-                    }
-
-                    if (data != nullptr)
-                        newStrip->setImage (juce::ImageCache::getFromMemory (data, dataSize));
-                }
+                if (auto image = loadImageResource (resources, imgName); image.isValid())
+                    newStrip->setImage (image);
 
                 if (irName.isNotEmpty())
                 {
@@ -208,8 +183,10 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize)
                         juce::String trimmedRes = res.trim();
                         if (trimmedRes.isNotEmpty())
                         {
-                            juce::String resourceName = trimmedRes.replaceCharacter ('.', '_').replaceCharacter (' ', '_');
-                            resList.add (resourceName);
+                            // ConvolReverb does its own BinaryData lookup, so
+                            // what it gets has to be the mangled identifier
+                            // rather than the file name.
+                            resList.add (fxsampler::ResourceProvider::makeIdentifier (trimmedRes));
                             namesList.add (trimmedRes);
                         }
                     }

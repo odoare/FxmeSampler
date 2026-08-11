@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "MixerStrips.h"
+#include "ResourceProvider.h"
 
 //==============================================================================
 /**
@@ -49,8 +50,15 @@ public:
      * @brief Loads mixer configuration from XML data.
      * @param xmlData Pointer to XML data.
      * @param xmlSize Size of XML data.
+     * @param resources Where the artwork named by the mapping comes from.
+     *        Defaults to the binary's own embedded set.
+     *
+     * Impulse responses are the exception: strips are handed resource *names*
+     * and ConvolReverb (in the FxmeFX submodule) resolves them from BinaryData
+     * itself, so a folder-loaded kit gets its IRs from the embedded set.
      */
-    void loadFromXml (const void* xmlData, int xmlSize);
+    void loadFromXml (const void* xmlData, int xmlSize,
+                      const fxsampler::ResourceProvider& resources = fxsampler::embeddedResources());
 
     /**
      * @brief Assigns APVTS parameters to all strips.

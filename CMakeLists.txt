@@ -39,7 +39,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/FxmeFX/Source/Common/CommonAssets.cmake)
 #   cmake -B build -DKIT=BlackWidow
 #   cmake -B build -DKIT=Century
 #   cmake -B build -DKIT=BassTest
-set(KIT "" CACHE STRING "Build only this kit (leave empty to build the default set)")
+# KIT=None builds no kit at all, which is what you want alongside
+# -DBUILD_DEV_HOST=ON.
+set(KIT "" CACHE STRING "Build only this kit (leave empty to build the default set, None for no kit)")
 
 # Every kit that -DKIT= will accept, and the subset built when KIT is empty.
 # They differ because BassTest is a test instrument for the loop machinery, not
@@ -53,9 +55,22 @@ if(KIT STREQUAL "")
     foreach(_kit IN LISTS _default_kits)
         add_subdirectory(Kits/${_kit})
     endforeach()
+elseif(KIT STREQUAL "None")
+    message(STATUS "KIT=None: building no kit plugin")
 else()
     if(NOT "${KIT}" IN_LIST _all_kits)
-        message(FATAL_ERROR "Unknown KIT '${KIT}'. Valid values: ${_all_kits}")
+        message(FATAL_ERROR "Unknown KIT '${KIT}'. Valid values: ${_all_kits} None")
     endif()
     add_subdirectory(Kits/${KIT})
+endif()
+
+# ── Dev host ───────────────────────────────────────────────────────────────
+# A standalone application that loads an uncompiled kit folder at runtime, for
+# authoring mappings. Off by default: it is a tool, not a product, and the
+# release workflow builds this whole project.
+#   cmake -B build-dev -DCMAKE_BUILD_TYPE=Release -DKIT=None -DBUILD_DEV_HOST=ON
+option(BUILD_DEV_HOST "Build the FxmeSamplerDev standalone kit loader" OFF)
+
+if(BUILD_DEV_HOST)
+    add_subdirectory(Dev)
 endif()

@@ -1,50 +1,56 @@
-# Black Widow Drums plugin
+# Bassid — a single looped bass sample, used to exercise the loop machinery
+# (loopStart/loopEnd/releaseStart, the crossfade, the release region) on
+# sustained pitched material rather than on one-shot drums.
+#
 # JUCE and FxmeTools are set up by the root CMakeLists.txt.
-# All paths below are relative to this file's directory (Kits/BlackWidow/).
+# All paths below are relative to this file's directory (Kits/BassTest/).
 
-juce_add_plugin(BlackWidowDrums
+juce_add_plugin(BassTest
     COMPANY_NAME                "Fx-Mechanics"
     PLUGIN_MANUFACTURER_CODE    FXME
-    PLUGIN_CODE                 BWDR
+    PLUGIN_CODE                 BAST
     FORMATS                     VST3 AU Standalone
-    PRODUCT_NAME                "Black Widow Drums"
-    DESCRIPTION                 "Gretsch Black Widow Drums"
+    PRODUCT_NAME                "Bassid"
+    DESCRIPTION                 "Looped bass test instrument"
     IS_SYNTH                    TRUE
     NEEDS_MIDI_INPUT            TRUE
     NEEDS_MIDI_OUTPUT           FALSE
     IS_MIDI_EFFECT              FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     VST3_CATEGORIES             "Instrument|Synth"
-    BUNDLE_ID                   "com.fxmechanics.BlackWidowDrums"
+    BUNDLE_ID                   "com.fxmechanics.BassTest"
 )
 
 # Everything under data/ is embedded; the lists below are globbed rather than
-# written out by hand, which had already drifted (a preset that never shipped,
-# and several unused takes). CONFIGURE_DEPENDS makes the build re-scan these
+# written out by hand. CONFIGURE_DEPENDS makes the build re-scan these
 # directories and reconfigure when their contents change, so a file dropped in
 # data/ is picked up without editing this file.
 #
-# The flip side is that ANYTHING in data/ ships. Working sources (GIMP
-# projects, photo originals, unused takes) belong in art/, which is never
-# scanned. The counts below are printed at configure time as a tripwire: if
-# they jump unexpectedly, something landed in data/ that should not have.
-file(GLOB BW_WAVS    CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/wav/*.wav")
-file(GLOB BW_PRESETS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/Presets/*.xml")
-file(GLOB BW_IMAGES  CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/img/*.png"
-                                      "${CMAKE_CURRENT_SOURCE_DIR}/data/img/*.jpg")
+# The flip side is that ANYTHING matching these patterns in data/ ships.
+# Working sources belong in art/, which is never scanned. The counts below are
+# printed at configure time as a tripwire: if they jump unexpectedly, something
+# landed in data/ that should not have.
+#
+# data/mapping_state.json is deliberately not matched by any pattern here. It is
+# the mapping tools' authoring state, it lives beside mapping.xml by their
+# convention, and it has no business inside the plugin binary.
+file(GLOB BT_WAVS    CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/wav/*.wav")
+file(GLOB BT_PRESETS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/presets/*.xml")
+file(GLOB BT_IMAGES  CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/img/*.png"
+                                       "${CMAKE_CURRENT_SOURCE_DIR}/data/img/*.jpg")
 
-list(LENGTH BW_WAVS    _bw_nwav)
-list(LENGTH BW_PRESETS _bw_npreset)
-list(LENGTH BW_IMAGES  _bw_nimg)
-message(STATUS "BlackWidow: embedding ${_bw_nwav} samples, ${_bw_npreset} presets, ${_bw_nimg} images")
+list(LENGTH BT_WAVS    _bt_nwav)
+list(LENGTH BT_PRESETS _bt_npreset)
+list(LENGTH BT_IMAGES  _bt_nimg)
+message(STATUS "BassTest: embedding ${_bt_nwav} samples, ${_bt_npreset} presets, ${_bt_nimg} images")
 
-juce_add_binary_data(BlackWidowDrumsBinaryData SOURCES
+juce_add_binary_data(BassTestBinaryData SOURCES
     # Mapping: the one file that must exist, so it stays explicit.
     data/mapping.xml
 
-    ${BW_PRESETS}
-    ${BW_IMAGES}
-    ${BW_WAVS}
+    ${BT_PRESETS}
+    ${BT_IMAGES}
+    ${BT_WAVS}
 
     # Shared across kits, from outside this directory.
     ../../img/logo686.png
@@ -60,13 +66,13 @@ juce_add_binary_data(BlackWidowDrumsBinaryData SOURCES
 
 # Embedded WAV arrays are huge; optimizing/LTO-ing byte arrays wastes RAM and
 # can OOM the machine. Nothing to optimize here.
-set_target_properties(BlackWidowDrumsBinaryData PROPERTIES
+set_target_properties(BassTestBinaryData PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION OFF)
-target_compile_options(BlackWidowDrumsBinaryData PRIVATE
+target_compile_options(BassTestBinaryData PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-O0 -fno-lto>
     $<$<CXX_COMPILER_ID:MSVC>:/Od>)
 
-target_sources(BlackWidowDrums PRIVATE
+target_sources(BassTest PRIVATE
     # Shared engine — relative to this kit directory
     ../../Source/EffectChain.cpp
     ../../Source/EffectChainComponent.cpp
@@ -104,7 +110,7 @@ target_sources(BlackWidowDrums PRIVATE
     # compiled in by fxmetools_attach() below, from FxmeTools' WDL submodule.
 )
 
-target_include_directories(BlackWidowDrums PRIVATE
+target_include_directories(BassTest PRIVATE
     ../../Source
     ../../FxmeFX/Source/Compressor
     ../../FxmeFX/Source/ConvolReverb
@@ -115,9 +121,9 @@ target_include_directories(BlackWidowDrums PRIVATE
     ../../FxmeFX/Source/VuMeter
 )
 
-juce_generate_juce_header(BlackWidowDrums)
+juce_generate_juce_header(BassTest)
 
-target_compile_definitions(BlackWidowDrums
+target_compile_definitions(BassTest
     PUBLIC
         JUCE_STRICT_REFCOUNTEDPOINTER=1
         JUCE_VST3_CAN_REPLACE_VST2=0
@@ -125,9 +131,9 @@ target_compile_definitions(BlackWidowDrums
         JUCE_USE_CURL=0
 )
 
-target_link_libraries(BlackWidowDrums
+target_link_libraries(BassTest
     PRIVATE
-        BlackWidowDrumsBinaryData
+        BassTestBinaryData
         FxmeCommonBinaryData
         juce_audio_basics
         juce_audio_devices
@@ -151,4 +157,4 @@ target_link_libraries(BlackWidowDrums
 # Links the FxmeTools module (fxme::VuMeter, fxme::SpectrumAnalyzer,
 # fxme::EmbeddedAudio, fxme::FxmeSlider, fxme::FxmeLookAndFeel…) and compiles
 # the WDL convolution engine reached through <convoengine.h>.
-fxmetools_attach(BlackWidowDrums)
+fxmetools_attach(BassTest)

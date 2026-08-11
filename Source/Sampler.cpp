@@ -625,7 +625,8 @@ void Sampler::addSound (const Sound& sound)
     loadSound (sounds.back());
 }
 
-void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
+void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize,
+                                  const fxsampler::ResourceProvider& resources)
 {
     if (xmlData == nullptr || xmlSize <= 0)
         return;
@@ -726,28 +727,11 @@ void Sampler::loadSamplesFromXml (const void* xmlData, int xmlSize)
             sound.name = child->getStringAttribute ("name");
             
             sound.resourceName = child->getStringAttribute ("resource");
-            juce::String resourceName = child->getStringAttribute ("resource").replaceCharacter ('.', '_').replaceCharacter (' ', '_');
-            
-            if (resourceName.isNotEmpty() && juce::CharacterFunctions::isDigit(resourceName[0]))
-                resourceName = "_" + resourceName;
-
-            sound.data = BinaryData::getNamedResource (resourceName.toRawUTF8(), sound.dataSize);
+            sound.data = resources.find (sound.resourceName, sound.dataSize);
 
             if (sound.data == nullptr)
             {
-                for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
-                {
-                    if (resourceName.equalsIgnoreCase (BinaryData::namedResourceList[i]))
-                    {
-                        sound.data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], sound.dataSize);
-                        break;
-                    }
-                }
-            }
-            
-            if (sound.data == nullptr)
-            {
-                DBG ("Warning: Could not find resource for sound: " << sound.name << " (resource: " << resourceName << ")");
+                DBG ("Warning: Could not find resource for sound: " << sound.name << " (resource: " << sound.resourceName << ")");
             }
 
             sound.midiNoteRange = juce::Range<int> (child->getIntAttribute ("noteLow"), child->getIntAttribute ("noteHigh") + 1);

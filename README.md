@@ -66,6 +66,57 @@ cmake --build build --config Release --parallel 2
 
 Artefacts are written per kit, to `build/Kits/BlackWidow/BlackWidowDrums_artefacts/Release/` and `build/Kits/Century/CenturyDrums_artefacts/Release/`. A single kit can be built with `-DKIT=BlackWidow` or `-DKIT=Century`.
 
+### The dev host
+
+Compiling a kit to hear it is a slow way to author one. `FxmeSamplerDev` is a
+standalone application that takes a kit folder — a `mapping.xml` plus its
+samples and artwork, never compiled — and plays it:
+
+```bash
+cmake -B build-dev -DCMAKE_BUILD_TYPE=Release -DKIT=None -DBUILD_DEV_HOST=ON
+cmake --build build-dev --parallel 8
+./build-dev/Dev/FxmeSamplerDev_artefacts/Release/FxmeSamplerDev [kit folder]
+```
+
+(It embeds only the shared artwork and impulse responses — a few megabytes
+rather than a kit's few hundred — so unlike a kit build it takes a full
+parallel build without running the machine out of memory.)
+
+It is off by default (`BUILD_DEV_HOST=OFF`), and `-DKIT=None` keeps it from
+building a kit plugin alongside. **Load kit…** picks a folder, **Reload**
+re-reads it after an edit, and the last folder is remembered between runs. The
+window holds the kit's own editor, unchanged — every parameter, preset and
+effect a compiled kit has.
+
+Presets saved while testing go to the kit folder's `presets/` directory rather
+than the platform preset folder, so they are already in place to be embedded
+when the kit is compiled.
+
+To check a mapping without opening a window — from a script, or before a
+build — use `--check`, which exits non-zero if anything the mapping names
+cannot be found:
+
+```console
+$ FxmeSamplerDev --check Kits/BassTest/data
+Folder      : /home/doare/src/FxmeSampler/Kits/BassTest/data
+Mapping     : /home/doare/src/FxmeSampler/Kits/BassTest/data/mapping.xml
+Files       : 4
+Presets dir : /home/doare/src/FxmeSampler/Kits/BassTest/data/presets
+Groups      : 1
+Strips      : 2
+Parameters  : 184
+Channels    : 2
+OK
+```
+
+Two things do not come from the folder. Shared artwork and the impulse
+responses are embedded in the dev host itself, because `ConvolReverb` resolves
+IR names through `BinaryData` directly; a mapping naming one of the standard
+IRs works, a mapping naming an IR of its own does not. And a kit folder can
+only be loaded at startup or by the Load button — never by a DAW — because the
+parameter list is fixed the moment the processor is constructed. That is the
+whole reason this is an application and not a plugin.
+
 > **Note:** The embedded demo kit files (wav samples and mapping.xml) currently live under `MyKits/FakeAmbixKit/Data/`, which is gitignored. Move them to a tracked location and update the paths in `CMakeLists.txt` before running CI builds.
 
 ## Configuration: `mapping.xml`
@@ -263,9 +314,22 @@ rather than something to perform with, so it stays in the mapping.
 
 ## Resource Handling
 
-The plugin loads files from JUCE's `BinaryData`.
-1.  **Filenames:** In `mapping.xml`, refer to files by their original filename (e.g., `my sample.wav`).
-2.  **Internal Mapping:** The code automatically converts filenames to valid C++ variable names (replacing spaces and dots with underscores) to locate them in `BinaryData`.
+A mapping refers to every file by its plain name (e.g. `my sample.wav`), and
+`Source/ResourceProvider.h` turns that name into bytes. Two sources exist:
+
+1.  **Embedded** — JUCE's `BinaryData`, which is what a compiled kit always
+    uses. Names are matched three ways: the identifier `juce_add_binary_data`
+    would have generated (spaces and dots become underscores, other punctuation
+    is dropped, a leading digit gets an underscore in front), that identifier
+    ignoring case, and finally the original file name ignoring case.
+2.  **A folder on disk** — used by the dev host described under *Building*. The
+    folder is indexed recursively, so `wav/`, `img/` and `presets/` are a
+    convention rather than a requirement, and anything the folder does not hold
+    falls back to the embedded set.
+
+The point of matching real file names first is that the same `mapping.xml`
+resolves identically either way: a kit that plays in the dev host plays the
+same once compiled.
 
 # Made with FxmeSampler
 

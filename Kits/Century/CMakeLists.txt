@@ -82,6 +82,7 @@ target_sources(CenturyDrums PRIVATE
     ../../Source/MixerStripComponents.cpp
     ../../Source/PluginEditor.cpp
     ../../Source/PluginProcessor.cpp
+    ../../Source/ResourceProvider.cpp
     ../../Source/Sampler.cpp
     ../../Source/SamplerComponent.cpp
     ../../Source/SampleGroupComponent.cpp

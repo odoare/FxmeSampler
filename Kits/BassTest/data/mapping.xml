@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated scaffold. Every TODO below needs a real value: the wav
+     files say nothing about artwork, colours or routing. -->
+<Mapping>
+  <WelcomeTab text="Bassid" img="tb.jpg" />
+  <Master channels="2" img="logo686.png" color="0,220,255"/>
+
+  <Mixer>
+    <Strip type="stereo" name="Bass" img="tb.jpg" color="255,100,100"/>
+    <Bus type="stereo" effectChain="Reverb" name="Reverb/Delay"
+          img="Room.jpg"
+          resource="Rectangular room small.wav,Rectangular room medium.wav,Rectangular room large.wav,Council Chamber.wav,Forest Short.wav,Forest Long.wav"
+          color="100,255,100"/>
+  </Mixer>
+
+  <SampleGroup name="Bass" channels="0:0, 1:1" muteGroup="0"
+             oneShot="false" loop="true" crossfade="18" releaseMode="region"
+             attack="0.001" decay="0.0" sustain="1.0" release="0.1"/>
+  <Sound name="A2" group="Bass" resource="1 Bass A2 0 45 45 45.wav" basePitch="45" noteLow="1" noteHigh="127" velLow="0" velHigh="127" sampleStart="22" sampleEnd="7087" loopStart="4090" loopEnd="5688" releaseStart="5688"/>
+
+</Mapping>

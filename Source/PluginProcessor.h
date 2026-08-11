@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "Sampler.h"
 #include "Mixer.h"
+#include "ResourceProvider.h"
 
 //==============================================================================
 /**
@@ -21,8 +22,24 @@ class FxmeSamplerAudioProcessor  : public juce::AudioProcessor
 {
 public:
     //==============================================================================
-    /** Constructor. */
-    FxmeSamplerAudioProcessor();
+    /**
+     * @brief Constructor.
+     * @param resources Where mapping.xml, the samples and the artwork come
+     *        from. Defaults to the set embedded in this binary, which is what
+     *        a hosted plugin always uses.
+     * @param userPresetDirectory Overrides the platform user-preset folder.
+     *        Empty means the default.
+     *
+     * Everything the mapping describes — parameters included — is fixed here,
+     * because a host queries the parameter list as soon as the constructor
+     * returns. That is why loading a different kit means building a new
+     * processor rather than reloading this one, and why only the standalone
+     * dev host (Dev/Main.cpp), which owns its processor, can do it.
+     *
+     * @a resources must outlive this processor: Sound::data points into it.
+     */
+    explicit FxmeSamplerAudioProcessor (const fxsampler::ResourceProvider& resources = fxsampler::embeddedResources(),
+                                        const juce::File& userPresetDirectory = {});
     /** Destructor. */
     ~FxmeSamplerAudioProcessor() override;
 
@@ -91,7 +108,12 @@ private:
     // Declared after apvts: members are constructed in declaration order and
     // the manager takes a reference to the state.
     fxme::PresetManager presetManager;
-    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+    // Static because it runs from the member initialiser list, before any
+    // member exists: it reads the mapping straight out of the provider the
+    // constructor was handed.
+    static juce::AudioProcessorValueTreeState::ParameterLayout
+        createParameterLayout (const fxsampler::ResourceProvider& resources);
     juce::AudioBuffer<float> samplerOutputBuffer;
 
     double lastBPM = -1.0;

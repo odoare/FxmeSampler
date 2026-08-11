@@ -99,6 +99,19 @@ to optimise in a byte array, and optimising one costs gigabytes).
 Building does not install. Copy the .vst3 to the VST3 folder and make the DAW
 rescan, since it caches the loaded module.
 
+Two knobs sit beside KIT. KIT accepts None, which builds no kit at all, and
+BUILD_DEV_HOST (default OFF) adds Dev/, the standalone kit loader described
+under "Loading a kit at runtime". They are separate because the release
+workflow builds this whole project: anything on by default is compiled into
+every release. Dev/CMakeLists.txt mirrors a kit's, minus the plugin wrapper,
+and spells out the JucePlugin_ macros by hand — the shared engine reads a
+handful of them and juce_add_gui_app defines none.
+
+```sh
+cmake -B build-dev -DCMAKE_BUILD_TYPE=Release -DKIT=None -DBUILD_DEV_HOST=ON
+cmake --build build-dev --parallel 8
+```
+
 ## Runtime structure
 
 ```
@@ -109,8 +122,10 @@ FxmeSamplerAudioProcessor
 
 The processor exposes four stereo output buses (Main, Aux 1, Aux 2, Aux 3).
 
-Everything is driven by mapping.xml, which is embedded in each kit's BinaryData
-as mapping_xml. It is read three times, for three different purposes:
+Everything is driven by mapping.xml, which the processor asks its
+fxsampler::ResourceProvider for by name — BinaryData for a compiled kit, a
+folder on disk for the dev host. It is read three times, for three different
+purposes:
 
 1. In createParameterLayout, on throwaway Sampler and Mixer instances, purely to
    enumerate the parameters. The APVTS layout has to exist before the real
@@ -151,6 +166,39 @@ mid, a horizontal figure-of-eight a quarter turn from it for the side, matrixed
 as L = M + width * S. It reads only W, Y, Z and X, and adds into the
 destination rather than overwriting, so several strips can sum into one bus.
 Source/AmbixToMS.h re-exports it under the old name.
+
+### Where resources come from
+
+Source/ResourceProvider.h owns every name-to-bytes lookup: mapping.xml, the
+samples, the artwork. EmbeddedResources reads BinaryData and is the default
+argument everywhere, so a kit target needs no knowledge of it. FolderResources
+reads a directory, indexed recursively at construction and cached on first
+read, falling back to the embedded set for anything the folder lacks.
+
+Two things stayed outside it. Impulse responses are handed to ConvolReverb as
+resource *names* and it resolves them from BinaryData itself, inside the FxmeFX
+submodule — so a folder-loaded kit gets the IRs the host binary embeds, not its
+own. And factory presets still come from BinaryData; a folder-loaded kit gets
+its presets/ directory as the *user* preset folder instead, which is better for
+authoring anyway since saving puts them where they will be embedded from.
+
+Lifetime is the one trap: Sound::data points into the provider, so the provider
+must outlive every Sampler built from it. Dev/Main.cpp declares it before the
+processor for exactly that reason.
+
+### Loading a kit at runtime
+
+Dev/Main.cpp (target FxmeSamplerDev, `-DBUILD_DEV_HOST=ON`) is a JUCE
+application, not a plugin, and the distinction is forced rather than stylistic:
+a mapping determines how many parameters exist, and a host reads the parameter
+list as soon as the constructor returns, so the kit has to be chosen before the
+processor exists. An application can do that; a plugin cannot, because the DAW
+constructs the processor.
+
+Reloading therefore replaces the whole processor rather than reloading the
+Sampler — which is also why the threading warning below does not apply to it.
+AudioProcessorPlayer is detached first, so no audio thread is running while the
+old processor, its editor and its provider are destroyed and new ones built.
 
 ## Playback regions and loop crossfade
 

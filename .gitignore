@@ -8,6 +8,7 @@
 **/__pycache__
 /build/
 /build-basstest/
+/build-dev/
 /JUCE
 /CMakeFiles
 
