@@ -35,6 +35,7 @@ import os
 import re
 import glob
 import json
+import math
 import wave
 from dataclasses import dataclass, field, asdict
 
@@ -53,6 +54,9 @@ except ImportError:
     HAS_SCIPY_IO = False
 
 
+# Bump this only for a change a v1 reader would get wrong. Adding Hit fields
+# with defaults is not one: a state written before loop points existed loads
+# with them unset, which is exactly what it means.
 STATE_VERSION = 1
 
 
@@ -138,9 +142,26 @@ class Hit:
     locked: bool = False      # set by the editor; re-detection must not move it
     rank: int = 0             # position in the velocity ladder, 0 = softest
 
+    # Playback regions, as absolute sample indices like start and end. -1 means
+    # unset, which is what a one-shot kit uses and what the engine reads as
+    # "loopStart = sampleStart, loopEnd = sampleEnd, releaseStart = loopEnd".
+    # Left out of the mapping entirely when unset, so a drum kit's Sound lines
+    # stay byte for byte what they were.
+    loop_start: int = -1
+    loop_end: int = -1
+    release_start: int = -1
+
     @property
     def length(self):
         return self.end - self.start
+
+    @property
+    def has_loop(self):
+        return self.loop_start >= 0 and self.loop_end > self.loop_start
+
+    @property
+    def loop_length(self):
+        return self.loop_end - self.loop_start if self.has_loop else 0
 
 
 @dataclass
@@ -433,6 +454,334 @@ def measure(mono, sample_rate, start, end, p):
     if seg.size == 0:
         return 0.0, 0.0
     return float(np.sqrt(np.mean(seg.astype(np.float64) ** 2))), float(np.abs(seg).max())
+
+
+# ─── Loop points ───────────────────────────────────────────────────────────
+#
+# The engine is the authority here, not this file. doc/architecture.md states
+# the region ordering, the crossfade formula and both gain laws, and render_loop
+# below is a transcription of it. If the preview and the plugin ever disagree,
+# that document decides which one is wrong.
+
+MIN_RELEASE_FADE_MS = 5.0     # Voice::minReleaseFadeMs
+
+
+def zero_crossings(mono, lo, hi, rising=None):
+    """Indices i in [lo, hi) where the signal changes sign between i and i+1.
+
+    rising=True keeps only negative-to-positive crossings, False only the other
+    way, None keeps both."""
+    lo = max(0, int(lo))
+    hi = min(len(mono) - 1, int(hi))
+    if hi <= lo:
+        return np.empty(0, dtype=int)
+
+    seg = mono[lo:hi + 1]
+    neg = seg < 0.0
+    cross = np.nonzero(neg[:-1] != neg[1:])[0]
+    if rising is True:
+        cross = cross[neg[cross]]
+    elif rising is False:
+        cross = cross[~neg[cross]]
+    return cross + lo
+
+
+def snap_to_zero_crossing(mono, sample, window, rising=True, bounds=None):
+    """Nearest zero crossing to `sample` within +/- window samples.
+
+    Both loop ends default to rising crossings, which is what makes a seam
+    continuous for anything periodic: two points at the same phase of the cycle
+    join without a step. Returns the sample unchanged when there is no crossing
+    to snap to, which is the honest answer for a decayed tail.
+
+    bounds restricts the search to a legal range. Callers with a range must pass
+    it rather than clamping the result: a crossing found outside the range and
+    then clamped lands on the boundary, which is not a crossing at all, so the
+    snap would appear to have happened and quietly not have."""
+    sample = int(sample)
+    lo, hi = sample - window, sample + window
+    if bounds is not None:
+        lo, hi = max(lo, bounds[0]), min(hi, bounds[1])
+
+    found = zero_crossings(mono, lo, hi, rising)
+    if found.size == 0:
+        return sample
+    return int(found[np.argmin(np.abs(found - sample))])
+
+
+def sounding_end(mono, hit, floor_db=-45.0):
+    """The last sample of a stroke that is actually making a sound.
+
+    A hit's end is the next stroke's start, which for sustained material is well
+    past the end of the note: a two-second organ note in a two-and-a-half second
+    slice has half a second of digital silence on the end. Anything that treats
+    the slice as the sound puts loop points in that silence, where there is
+    nothing to loop and no zero crossing to snap to either."""
+    lo, hi = int(hit.start), int(min(hit.end, len(mono)))
+    if hi <= lo:
+        return hi
+
+    seg = np.abs(mono[lo:hi])
+    peak = float(seg.max())
+    if peak <= 0.0:
+        return hi
+
+    above = np.nonzero(seg > peak * (10.0 ** (floor_db / 20.0)))[0]
+    return lo + int(above[-1]) + 1 if above.size else hi
+
+
+def default_loop_points(mono, hit, sample_rate, snap_ms=5.0):
+    """A first guess at a loop for a stroke that has none.
+
+    Deliberately unambitious: the second half of the sounding part of the
+    stroke, ending short of its tail, with both ends snapped to rising zero
+    crossings. It is a starting point to drag, not a proposal to trust; the real
+    loop finder is a separate job and needs f0 to constrain the length to whole
+    periods."""
+    end = sounding_end(mono, hit)
+    span = end - hit.start
+    if span < 4:
+        return hit.start, hit.end, hit.end
+
+    loop_start = hit.start + int(span * 0.50)
+    loop_end = hit.start + int(span * 0.90)
+
+    window = max(1, int(snap_ms * sample_rate / 1000.0))
+    loop_start = snap_to_zero_crossing(mono, loop_start, window)
+    loop_end = snap_to_zero_crossing(mono, loop_end, window)
+
+    # Snapping can cross the two over on very short strokes.
+    if loop_end <= loop_start:
+        loop_start = hit.start + int(span * 0.50)
+        loop_end = hit.start + int(span * 0.90)
+
+    return loop_start, loop_end, loop_end
+
+
+def loop_warnings(hit):
+    """The engine's ordering constraint, checked where it can still be fixed.
+
+    The plugin clamps points back into order on load and logs it, so a mapping
+    that trips any of these still plays; it just does not play what was
+    authored."""
+    out = []
+    if not hit.has_loop:
+        if hit.loop_start >= 0 or hit.loop_end >= 0:
+            out.append(f"loopStart {hit.loop_start} / loopEnd {hit.loop_end} "
+                       "is not a usable loop (need loopStart < loopEnd)")
+        return out
+
+    if hit.loop_start < hit.start:
+        out.append(f"loopStart {hit.loop_start} is before sampleStart {hit.start}")
+    if hit.loop_end > hit.end:
+        out.append(f"loopEnd {hit.loop_end} is past sampleEnd {hit.end}")
+
+    if hit.release_start >= 0:
+        if hit.release_start < hit.loop_end:
+            out.append(f"releaseStart {hit.release_start} is before loopEnd {hit.loop_end}")
+        if hit.release_start > hit.end:
+            out.append(f"releaseStart {hit.release_start} is past sampleEnd {hit.end}")
+
+    return out
+
+
+def max_crossfade_samples(hit):
+    """What a crossfade can actually be, in samples: shorter than the loop, and
+    no further back from loopStart than sampleStart. Voice::maxCrossfadeSamples."""
+    if not hit.has_loop:
+        return 0.0
+    loop_len = float(hit.loop_end - hit.loop_start)
+    if loop_len <= 1.0:
+        return 0.0
+    return max(0.0, min(loop_len - 1.0, float(hit.loop_start - hit.start)))
+
+
+def _fade_gains(g, shape):
+    """gainOut falls 1 to 0, gainIn rises 0 to 1. Voice::fadeGains."""
+    if shape == "linear":
+        return 1.0 - g, g
+    angle = g * math.pi / 2.0
+    return math.cos(angle), math.sin(angle)
+
+
+def _read_interpolated(buf, position, wrap_at_loop, loop_start, loop_end):
+    """Voice::readInterpolated. Silence outside the buffer; with wrap_at_loop the
+    sample after loopEnd - 1 is loopStart, so the seam interpolates continuously."""
+    pos = int(position)
+    if pos < 0 or pos >= len(buf):
+        return 0.0
+
+    s0 = buf[pos]
+    s1 = 0.0
+    if wrap_at_loop and pos + 1 >= loop_end:
+        s1 = buf[loop_start]
+    elif pos + 1 < len(buf):
+        s1 = buf[pos + 1]
+
+    return s0 + (position - pos) * (s1 - s0)
+
+
+def render_loop(mono, sample_rate, hit, crossfade_ms=0.0, shape="equalPower",
+                hold_s=1.5, release_mode="loop", release_s=0.3, increment=1.0):
+    """Play a hit the way the plugin would, for listening and for drawing.
+
+    A transcription of Voice::renderNextBlock, not an approximation of it: the
+    two heads, the seam crossfade, the wrap, the jump into the release region
+    and its fade all behave as in Source/Sampler.cpp.
+
+    What it leaves out is the envelope. Attack, decay and sustain are not
+    applied, because the question this answers is whether the loop is clean, and
+    an envelope on top only hides the seam. The ADSR release is applied in
+    release_mode="loop", since there it is the whole mechanism.
+
+    Returns float32, one channel."""
+    start = int(hit.start)
+    end = int(hit.end)
+    loop_start = int(hit.loop_start) if hit.has_loop else start
+    loop_end = int(hit.loop_end) if hit.has_loop else end
+    release_start = int(hit.release_start) if hit.release_start >= 0 else loop_end
+
+    looping = hit.has_loop
+    loop_len = float(loop_end - loop_start)
+
+    crossfade = 0.0
+    if looping and crossfade_ms > 0.0:
+        crossfade = min(crossfade_ms * 0.001 * sample_rate, max_crossfade_samples(hit))
+
+    hold_n = int(hold_s * sample_rate)
+    tail_n = int((max(release_s, (end - release_start) / sample_rate) + 0.05) * sample_rate)
+    out = np.zeros(hold_n + tail_n, dtype=np.float32)
+
+    position = float(start)
+    loop_position = 0.0
+
+    # Voice::Region, plus the envelope release that Loop mode uses instead.
+    in_release_region = False
+    env_releasing = False
+
+    release_fade = 0.0
+    envelope = 1.0
+    env_step = 1.0 / max(1.0, release_s * sample_rate)
+
+    written = 0
+    for i in range(len(out)):
+        # Note off.
+        if i == hold_n and looping and not (in_release_region or env_releasing):
+            if release_mode == "region" and release_start < end:
+                loop_position = position
+                position = float(release_start)
+                in_release_region = True
+                tail = float(end - release_start)
+                asked = max(MIN_RELEASE_FADE_MS, crossfade_ms) * 0.001 * sample_rate
+                release_fade = min(max(asked, 0.0), tail)
+            else:
+                env_releasing = True
+
+        main_loops = looping and not in_release_region
+        if not main_loops and int(position) >= end:
+            break
+
+        # Release jump fade, main head against the loop it left.
+        gain_release, gain_loop, leaving = 1.0, 0.0, False
+        if in_release_region and release_fade > 0.0:
+            travelled = position - release_start
+            if travelled < release_fade:
+                gain_loop, gain_release = _fade_gains(
+                    min(1.0, max(0.0, travelled / release_fade)), shape)
+                leaving = True
+
+        # The body head: the main one until the release region takes it over.
+        body_playing = (not in_release_region) or leaving
+        body_position = loop_position if in_release_region else position
+
+        body_fading = False
+        body_main, body_next = 1.0, 0.0
+        if body_playing and looping and crossfade > 0.0:
+            fade_from = loop_end - crossfade
+            if body_position >= fade_from:
+                body_main, body_next = _fade_gains(
+                    min(1.0, max(0.0, (body_position - fade_from) / crossfade)), shape)
+                body_fading = True
+
+        def read_body():
+            main = _read_interpolated(mono, body_position, looping and not body_fading,
+                                      loop_start, loop_end)
+            if not body_fading:
+                return main
+            behind = _read_interpolated(mono, body_position - loop_len, False,
+                                        loop_start, loop_end)
+            return body_main * main + body_next * behind
+
+        if in_release_region:
+            value = _read_interpolated(mono, position, False, loop_start, loop_end)
+            if leaving:
+                value = gain_release * value + gain_loop * read_body()
+        else:
+            value = read_body()
+
+        if env_releasing:
+            envelope -= env_step
+            if envelope <= 0.0:
+                break
+            value *= envelope
+
+        out[i] = value
+        written = i + 1
+
+        # advance
+        position += increment
+        if main_loops and position >= loop_end:
+            over = position - loop_end
+            position = (loop_start + math.fmod(over, loop_len)) if loop_len > 0 else loop_start
+        if leaving:
+            loop_position += increment
+            if loop_position >= loop_end:
+                over = loop_position - loop_end
+                loop_position = ((loop_start + math.fmod(over, loop_len))
+                                 if loop_len > 0 else loop_start)
+
+    return out[:written]
+
+
+def seam_view(mono, hit, sample_rate, crossfade_ms=0.0, shape="equalPower", span=400):
+    """What the loop seam looks and sounds like, as three curves over the same
+    x axis of samples either side of the wrap:
+
+        heard     the rendered output, crossfade included
+        naive     the plain concatenation, i.e. the seam with no crossfade
+        ahead     what would have followed loopEnd had the loop not wrapped
+
+    naive and ahead diverging at x=0 is the discontinuity; heard staying with
+    ahead through the seam is the crossfade removing it."""
+    if not hit.has_loop:
+        return None
+
+    x = np.arange(-span, span)
+    naive = np.zeros(len(x), dtype=np.float32)
+    ahead = np.zeros(len(x), dtype=np.float32)
+    for i, dx in enumerate(x):
+        naive[i] = _read_interpolated(mono, (hit.loop_end + dx) if dx < 0
+                                      else (hit.loop_start + dx), False, 0, 0)
+        ahead[i] = _read_interpolated(mono, hit.loop_end + dx, False, 0, 0)
+
+    # The heard curve is position-driven, exactly as the engine's gains are, so
+    # it needs no run-up: every sample is a function of where the head is.
+    heard = np.zeros(len(x), dtype=np.float32)
+    loop_len = float(hit.loop_end - hit.loop_start)
+    crossfade = (min(crossfade_ms * 0.001 * sample_rate, max_crossfade_samples(hit))
+                 if crossfade_ms > 0.0 else 0.0)
+    for i, dx in enumerate(x):
+        p = (hit.loop_end + dx) if dx < 0 else (hit.loop_start + dx)
+        fading = crossfade > 0.0 and p >= hit.loop_end - crossfade and dx < 0
+        value = _read_interpolated(mono, p, crossfade <= 0.0, hit.loop_start, hit.loop_end)
+        if fading:
+            g = min(1.0, max(0.0, (p - (hit.loop_end - crossfade)) / crossfade))
+            a, b = _fade_gains(g, shape)
+            value = a * value + b * _read_interpolated(mono, p - loop_len, False,
+                                                       hit.loop_start, hit.loop_end)
+        heard[i] = value
+
+    return x, heard, naive, ahead
 
 
 # ─── Linking ───────────────────────────────────────────────────────────────
@@ -773,6 +1122,28 @@ def _set_attr(line, name, value):
     return new
 
 
+def _upsert_attr(line, name, value):
+    """Replace the attribute, or add it before the closing bracket when the
+    template has none. Adding rather than requiring it is what lets a mapping
+    written before loop points existed gain them without being rewritten."""
+    try:
+        return _set_attr(line, name, value)
+    except ValueError:
+        pass
+
+    m = re.search(r"\s*/?>\s*$", line)
+    if m is None:
+        raise ValueError(f"no closing bracket to insert {name} into: {line.strip()[:80]}")
+    return line[:m.start()] + f' {name}="{value}"' + line[m.start():]
+
+
+def _drop_attr(line, name):
+    """Remove the attribute if present. A stroke with no loop points must emit
+    no loop attributes at all, or clearing a loop in the editor would leave a
+    stale loopStart behind in the mapping."""
+    return re.sub(r'\s+' + re.escape(name) + r'="[^"]*"', "", line, count=1)
+
+
 def _read_text(path):
     """Returns (lines, terminator, had_final_newline) so the file can be put
     back together exactly as it was."""
@@ -831,7 +1202,14 @@ def read_mapping_xml(path):
                     f"sampleStart/sampleEnd (first: {resource}).\n"
                     "These tools slice multi-hit take files. A kit whose samples "
                     "are already cut needs no slicing and is not their subject.")
-            hits.append(Hit(start=int(start), end=int(end), rank=rank))
+            def optional(name):
+                raw = _attr(line, name)
+                return int(raw) if raw is not None else -1
+
+            hits.append(Hit(start=int(start), end=int(end), rank=rank,
+                            loop_start=optional("loopStart"),
+                            loop_end=optional("loopEnd"),
+                            release_start=optional("releaseStart")))
         out[resource] = hits
     return out
 
@@ -847,7 +1225,9 @@ def seed_entries_from_mapping(entries, path):
         if hits is None:
             missing.append(e.filename)
             continue
-        e.hits = sorted((Hit(start=h.start, end=h.end, rank=h.rank) for h in hits),
+        e.hits = sorted((Hit(start=h.start, end=h.end, rank=h.rank,
+                             loop_start=h.loop_start, loop_end=h.loop_end,
+                             release_start=h.release_start) for h in hits),
                         key=lambda h: h.start)
     return missing
 
@@ -950,7 +1330,23 @@ def write_mapping_xml(src_path, entries, dst_path=None):
             line = _set_attr(line, "velHigh", hi)
             line = _set_attr(line, "sampleStart", hit.start)
             line = _set_attr(line, "sampleEnd", hit.end)
+
+            # Loop attributes appear only on strokes that have them. A kit with
+            # no loops therefore produces exactly the line it produced before
+            # loop points existed, which is what keeps the round trip byte for
+            # byte and its diffs worth reading.
+            for name, value in (("loopStart", hit.loop_start),
+                                ("loopEnd", hit.loop_end),
+                                ("releaseStart", hit.release_start)):
+                if hit.has_loop and value >= 0:
+                    line = _upsert_attr(line, name, value)
+                else:
+                    line = _drop_attr(line, name)
+
             new_lines.append(line)
+
+            for w in loop_warnings(hit):
+                notes.append(f"{resource} layer {hit.rank + 1}: {w}")
 
         old_count = last - first + 1
         if old_count != len(new_lines):

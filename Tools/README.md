@@ -205,6 +205,12 @@ so attribute order, spacing and any attribute the tool has never heard of are
 inherited by every regenerated layer. A run grows or shrinks freely when the
 stroke count changes.
 
+`loopStart`, `loopEnd` and `releaseStart` are the exception to substitution:
+they are **added** when a stroke has loop points and **removed** when it does
+not, because no mapping written before loop points existed has them to replace.
+A kit with no loops therefore emits exactly the line it always emitted, which is
+what keeps `--verify` byte-identical for every drum kit here.
+
 Two consequences: a resource with no `<Sound>` run in the file is reported and
 skipped rather than invented, and a run whose resource has no state is left
 untouched.
@@ -231,6 +237,7 @@ moved.
 ```
 n / p        next / previous file        right / left  next / previous stroke
 . / ,        nudge 1 ms later / earlier  > / <         nudge 10 ms
++ / -        nudge one sample
 click        top pane: select nearest    zoom pane: move the selected start
 a            add a stroke at the last click
 d  r  u      delete / re-snap / unlock the selected stroke
@@ -244,6 +251,97 @@ markers: red detected, orange dashed locked, blue selected,
 
 `r` is the one to know: click roughly where the stroke is and press `r`, and it
 snaps to the nearest attack foot using the same refinement the detector uses.
+
+## Loop mode
+
+`L` switches the editor to authoring loop points, for sustained and pitched
+material. The keys keep their shape and change their subject: the nudge keys
+move a loop point instead of a stroke start.
+
+```
+1 / 2 / 3    select loopStart / loopEnd / releaseStart
+. , > <      nudge it 1 ms / 10 ms         + / -  nudge it one sample
+click        stroke pane: put it there (coarse)
+             seam pane:   move a loop end by the offset clicked (fine)
+z            snap to the nearest rising zero crossing
+c            cycle the preview crossfade   e  envelope / region release
+space        play it                       x  create / clear the loop
+m / M        copy loop points from this take's reference file
+```
+
+The panes change too. The top one shows the **selected stroke** rather than the
+whole file, since at file scale three loop points land in the same pixel. The
+bottom becomes a **seam view**: three curves over the samples either side of the
+wrap.
+
+- **as played** — the rendered output, crossfade included
+- **hard seam** — the plain concatenation, i.e. no crossfade
+- **if it had not wrapped** — what would have followed `loopEnd`
+
+The last two diverging at 0 *is* the discontinuity. The crossfade is doing its
+job when the played curve stays with "if it had not wrapped" through the seam.
+
+**Place loop points from the seam pane, not the stroke pane.** The stroke pane's
+whole width is the stroke, so one pixel is many samples; the seam pane spans a
+few hundred samples, so one pixel is about one. Each half of it is one specific
+place in the file — left of the wrap is the material running up to `loopEnd`,
+right of it the material following `loopStart` — so clicking either half means
+the same thing, "put the seam here", and moves that end by the offset you
+clicked. The view then recentres on the new seam, so you can converge on it.
+`+` and `-` finish the job one sample at a time; at 44.1 kHz that is 23
+microseconds, and a loop end a few samples off the crossing is the difference
+between a clean join and a tick.
+
+`releaseStart` is deliberately not reachable from the seam pane: it plays no
+part in the seam, and nothing there shows where it is.
+
+`releaseStart` follows `loopEnd` while the two are touching, which is how a loop
+starts life, so dragging `loopEnd` earlier does not silently open a stretch that
+is neither looped nor played. Once you have parted them on purpose it stays
+where you put it. `loopEnd` itself runs all the way to `sampleEnd` and pushes
+`releaseStart` ahead of it, rather than being stopped by it — stopping it at
+`releaseStart` reads as correct and is a trap, since the two are equal on a
+fresh loop, so `loopEnd`'s ceiling would be `loopEnd` and it could only ever be
+dragged earlier.
+
+`space` plays the stroke through `mapping_lib.render_loop`, which is a
+transcription of `Voice::renderNextBlock`, not an approximation of it: the two
+read heads, the seam crossfade, the wrap, the jump into the release region and
+its fade all behave as the plugin's. `doc/architecture.md` states the contract
+both sides implement, and is the arbiter if they ever disagree. What the preview
+leaves out is the ADSR envelope, deliberately — an envelope on top would hide
+the seam, which is the one thing you are listening for. It plays the same single
+channel the editor draws.
+
+Two settings are **listening aids and are not saved**: the preview crossfade and
+the release mode. `crossfade`, `crossfadeShape` and `releaseMode` are
+`<SampleGroup>` attributes, and this tool only ever writes `<Sound>` lines. Find
+a crossfade you like here, then set it on the group in `mapping.xml` or on the
+Sampler tab.
+
+Zero-crossing snapping looks for **rising** crossings at both ends, which is
+what makes a seam continuous for anything periodic: two points at the same phase
+of the cycle join without a step. It searches only inside the legal range for
+that point, and says plainly when there is no crossing within reach rather than
+reporting a snap that did not happen — a decayed tail or a stretch sitting on a
+DC offset can genuinely have none.
+
+The five points are kept in the order the engine requires as you drag them:
+
+```
+sampleStart <= loopStart < loopEnd <= releaseStart <= sampleEnd
+```
+
+The plugin clamps them the same way on load and logs it. Clamping here instead
+is the difference between seeing what you get and being surprised by it later.
+
+`m` / `M` copy loop points from a take's reference file **exactly**, for the
+same reason they copy stroke starts exactly: linked files are one multitrack, so
+sample N is the same instant in each.
+
+The real loop *finder* — estimating f0 and constraining loop lengths to whole
+periods — is not here yet. `x` proposes the second half of the stroke with both
+ends snapped, as somewhere to start dragging, not as a proposal to trust.
 
 Run the editor with **no folder argument** and it asks for one in a dialog. On
 quit it offers a second dialog: save the state, write `mapping.xml`, or neither.
@@ -261,17 +359,29 @@ correspondence would otherwise silently map the wrong stroke to the wrong layer.
 
 ## Tests
 
-    python3 Tools/mapping_build.py --selftest     # detection, 43 checks
-    python3 Tools/MappingEditor.py <folder> --selftest   # editing, 38 checks
+    python3 Tools/mapping_build.py --selftest     # detection + writer, 53 checks
+    python3 Tools/MappingEditor.py <folder> --selftest   # editing + loops, 98 checks
 
 The detection self-test needs no audio: it synthesises takes of decaying noise
 bursts at known positions, across a range of lead-in lengths and stroke counts,
 and checks the count, the onset positions to within 4 ms, and that the velocity
 ladder follows the synthesised crescendo. It exists because the lead-in bugs
-above were silent, producing a correct stroke count from the wrong strokes.
+above were silent, producing a correct stroke count from the wrong strokes. It
+then checks the writer against a mapping that predates loop points, in both
+directions: attributes appear for a stroke that has them, vanish when it is
+cleared, and a mapping already carrying them round-trips byte-identically.
 
 The editor self-test drives the whole edit state machine headlessly. It covers
-the logic but not the mouse.
+the logic but not the mouse. The loop renderer is checked on a 220 Hz sine whose
+loop is deliberately not a whole number of periods, so the claim being tested is
+sharp: a hard seam steps by more than three times the waveform's own steepest
+step, and a 20 ms crossfade brings it back under 1.2 times. Snapping is checked
+against a sine whose crossings are known exactly.
+
+It runs in a throwaway directory. That matters more than it sounds: the editor
+seeds re-detection from any state file it finds, so a self-test that saved into
+the real state file would change the hits the *next* run's checks were written
+against, and an unchanged tool would fail on its second run.
 
 `mapping_build.py <folder> --verify` is the third check and is described above.
 
@@ -285,3 +395,9 @@ the logic but not the mouse.
 - The QC overlay panel is the useful one. It stacks every stroke aligned on its
   own detected onset, so a misplaced start is the one curve that does not rise
   with the others.
+- **`space` needs `sounddevice`.** Everything else in loop mode works without an
+  audio device; a missing package costs you the listening, not the tool.
+- **Moving a stroke start can strand loop points outside their slice.** The
+  points are absolute sample indices, so they do not follow the stroke. The loop
+  header, the report and the writer all say so, and the engine would clamp them,
+  but nothing moves them for you.

@@ -251,6 +251,16 @@ by picking matching zero crossings, whereas the release jump leaves the loop at
 whatever point the note-off happened to fall on, so `crossfade="0"` would click
 on every release.
 
+`loop`, `crossfade` and `releaseMode` are also per-group controls in the Sampler
+tab and automatable parameters, with the value in `mapping.xml` as the default.
+The panel greys out whatever the current mode makes inert: the loop controls
+while a group is `oneShot`, the crossfade and release mode while it is not
+looping, and the ADSR **Release** knob whenever a looping group is in `region`
+mode, where the recorded tail does the decay instead.
+
+`crossfadeShape` has no control: it is a property of the recorded material
+rather than something to perform with, so it stays in the mapping.
+
 ## Resource Handling
 
 The plugin loads files from JUCE's `BinaryData`.

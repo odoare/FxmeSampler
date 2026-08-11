@@ -78,11 +78,31 @@ def report(folder, entries, takes, p):
                 print(f"   {'':14s}     {m}")
         print(f"   {'':14s} {t.status}")
 
+    # Loop points, when a kit has any. Silent for the drum kits, which have
+    # none, rather than printing an empty section on every run.
+    looped = [(e, h) for e in entries for h in e.hits if h.has_loop]
+    bad_loops = [(e, h, w) for e in entries for h in e.hits
+                 for w in [ml.loop_warnings(h)] if w]
+    if looped or bad_loops:
+        print("\nloop points")
+        print("-" * 60)
+        by_file = {}
+        for e, h in looped:
+            by_file.setdefault(e.filename, []).append(h)
+        for name, hits in sorted(by_file.items()):
+            spans = ", ".join(f"L{h.rank + 1} {h.loop_length} sa" for h in hits)
+            print(f"  {name[:44]:44s} {len(hits)} looped: {spans}")
+        for e, h, warns in bad_loops:
+            for w in warns:
+                print(f"  !! {e.filename} layer {h.rank + 1}: {w}")
+
     print()
     if problems:
         print(f"{len(problems)} file(s) need a look: " + ", ".join(problems))
     else:
         print("all files detected the expected number of strokes")
+    if bad_loops:
+        print(f"{len(bad_loops)} stroke(s) have loop points the engine would clamp")
     bad_links = [t.name for t in takes if not t.status.startswith("linked")]
     if bad_links:
         print("rejected links: " + ", ".join(bad_links))
@@ -218,6 +238,81 @@ def selftest():
             by_time = sorted(e.hits, key=lambda h: h.start)
             check(f"{label}: velocity ladder follows the crescendo",
                   [h.rank for h in by_time] == sorted(h.rank for h in by_time))
+
+    # ── the writer, where loop points meet a mapping that predates them ────
+    #
+    # The guarantee under test is asymmetric on purpose. A stroke with no loop
+    # points must produce the line it always produced, byte for byte, or every
+    # existing kit's diff fills with noise. A stroke with them must gain the
+    # attributes even though no template has them to replace.
+    with tempfile.TemporaryDirectory() as folder:
+        template = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            "<Mapping>",
+            '  <SampleGroup name="G" channels="0,1" oneShot="true"/>',
+            '  <Sound name="F" group="G" resource="a.wav" basePitch="60" noteLow="60"'
+            ' noteHigh="60" velLow="0" velHigh="127" sampleStart="0" sampleEnd="1000"/>',
+            "</Mapping>",
+        ]
+        src = os.path.join(folder, "mapping.xml")
+        ml._write_text(src, template, "\n", True)
+
+        entry = ml.FileEntry(filename="a.wav", expected=2, group="G", family="F",
+                             mute_group=0, base_pitch=60, note_low=60, note_high=60,
+                             n_frames=2000)
+        entry.hits = [ml.Hit(start=0, end=1000, rank=0),
+                      ml.Hit(start=1000, end=2000, rank=1)]
+
+        plain = os.path.join(folder, "plain.xml")
+        ml.write_mapping_xml(src, entry_list := [entry], plain)
+        written = open(plain).read()
+        check("a stroke with no loop emits no loop attributes",
+              "loopStart" not in written and "releaseStart" not in written)
+
+        entry.hits[0].loop_start = 400
+        entry.hits[0].loop_end = 900
+        entry.hits[0].release_start = 950
+        looped = os.path.join(folder, "looped.xml")
+        ml.write_mapping_xml(src, entry_list, looped)
+        text = open(looped).read()
+        check("loop attributes are inserted into a template that lacks them",
+              'loopStart="400"' in text and 'loopEnd="900"' in text
+              and 'releaseStart="950"' in text)
+        check("only the stroke that has them gets them", text.count("loopStart") == 1)
+        check("the insertion stays inside the element",
+              'releaseStart="950"/>' in text)
+
+        # Read back, write again: a mapping that already carries loop points has
+        # to survive the trip untouched, or a second export would churn the file.
+        entries2 = [ml.FileEntry(filename="a.wav", expected=2, group="G", family="F",
+                                 mute_group=0, base_pitch=60, note_low=60,
+                                 note_high=60, n_frames=2000)]
+        ml.seed_entries_from_mapping(entries2, looped)
+        check("loop points survive being read back",
+              (entries2[0].hits[0].loop_start, entries2[0].hits[0].loop_end,
+               entries2[0].hits[0].release_start) == (400, 900, 950))
+        again = os.path.join(folder, "again.xml")
+        ml.write_mapping_xml(looped, entries2, again)
+        check("a mapping with loop points round-trips byte-identically",
+              open(looped, "rb").read() == open(again, "rb").read())
+
+        # Clearing must remove them, not leave a stale loopStart behind.
+        entries2[0].hits[0].loop_start = -1
+        entries2[0].hits[0].loop_end = -1
+        entries2[0].hits[0].release_start = -1
+        cleared = os.path.join(folder, "cleared.xml")
+        ml.write_mapping_xml(looped, entries2, cleared)
+        check("clearing a loop removes the attributes",
+              "loopStart" not in open(cleared).read())
+        check("and gives back the line it started with",
+              open(cleared, "rb").read() == open(plain, "rb").read())
+
+        bad = ml.Hit(start=100, end=900, loop_start=50, loop_end=1000, release_start=40)
+        problems = ml.loop_warnings(bad)
+        check("out-of-order loop points are reported", len(problems) == 3)
+        check("a legal loop reports nothing",
+              ml.loop_warnings(ml.Hit(start=0, end=1000, loop_start=100,
+                                      loop_end=900, release_start=900)) == [])
 
     print(f"\ndetection selftest: {checks - len(failures)}/{checks} checks passed")
     for f in failures:
