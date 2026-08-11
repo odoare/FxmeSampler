@@ -858,6 +858,9 @@ void Sampler::assignParameters (juce::AudioProcessorValueTreeState& apvts)
         group->minVelocityGainParam = apvts.getRawParameterValue (prefix + "MinVelGain");
         group->groupLevelParam = apvts.getRawParameterValue (prefix + "GroupLevel");
         group->startOffsetParam = apvts.getRawParameterValue (prefix + "StartOffset");
+        group->loopParam = apvts.getRawParameterValue (prefix + "Loop");
+        group->crossfadeParam = apvts.getRawParameterValue (prefix + "Crossfade");
+        group->releaseModeParam = apvts.getRawParameterValue (prefix + "ReleaseMode");
     }
 }
 
@@ -881,6 +884,21 @@ void SampleGroup::addParameters (std::vector<std::unique_ptr<juce::RangedAudioPa
     params.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { prefix + "MinVelGain", 1 }, name + " Min Vel Gain", -40.0f, 0.0f, (float)minVelocityGain));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { prefix + "GroupLevel", 1 }, name + " Group Level", -12.0f, 6.0f, (float)groupLevel));
     params.push_back (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID { prefix + "StartOffset", 1 }, name + " Start Offset", -10.0f, 10.0f, (float)startOffset));
+
+    params.push_back (std::make_unique<juce::AudioParameterBool> (juce::ParameterID { prefix + "Loop", 1 }, name + " Loop", isLoop));
+
+    // Skewed so the useful end has the travel: a crossfade is normally tens of
+    // milliseconds, and the top of the range exists for pads and room tails.
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { prefix + "Crossfade", 1 }, name + " Crossfade",
+        juce::NormalisableRange<float> (0.0f, 500.0f, 0.0f, 0.3f), (float) crossfadeMs));
+
+    // A choice rather than a bool so the host shows the same two words the
+    // mapping file uses for releaseMode.
+    params.push_back (std::make_unique<juce::AudioParameterChoice> (
+        juce::ParameterID { prefix + "ReleaseMode", 1 }, name + " Release Mode",
+        juce::StringArray { "Loop", "Region" },
+        releaseMode == ReleaseMode::Region ? 1 : 0));
 }
 
 void Sampler::updateParams()
@@ -898,6 +916,13 @@ void Sampler::updateParams()
         if (group->groupLevelParam) group->groupLevel = *group->groupLevelParam;
         if (group->minVelocityGainParam) group->minVelocityGain = *group->minVelocityGainParam;
         if (group->startOffsetParam) group->startOffset = *group->startOffsetParam;
+        if (group->loopParam) group->isLoop = *group->loopParam > 0.5f;
+        if (group->crossfadeParam) group->crossfadeMs = *group->crossfadeParam;
+
+        // A choice parameter reads back as its index, so 1 is "Region".
+        if (group->releaseModeParam)
+            group->releaseMode = (*group->releaseModeParam > 0.5f) ? ReleaseMode::Region
+                                                                  : ReleaseMode::Loop;
     }
 }
 

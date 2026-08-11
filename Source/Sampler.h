@@ -122,6 +122,9 @@ struct SampleGroup
     std::atomic<float>* groupLevelParam = nullptr;
     std::atomic<float>* minVelocityGainParam = nullptr;
     std::atomic<float>* startOffsetParam = nullptr;
+    std::atomic<float>* loopParam = nullptr;
+    std::atomic<float>* crossfadeParam = nullptr;
+    std::atomic<float>* releaseModeParam = nullptr;
 
     /**
      * @brief Gets the name of the sample group.
