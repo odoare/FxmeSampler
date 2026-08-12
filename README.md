@@ -176,8 +176,8 @@ Defines a mixer channel strip.
 | `name` | String | Display name of the strip. |
 | `img` | String | Icon resource name. |
 | `color` | String | Strip color. |
-| `effectChain` | String | Effect chain type. Default is "dynamics". |
-| `resource` | String | (For reverb strips) Comma-separated list of Impulse Response (IR) filenames. |
+| `effectChain` | String | Effect chain type: `Dynamics` (default), `Amp`, `Reverb` or `Delay`. See Effect Chains below. |
+| `resource` | String | Comma-separated list of Impulse Response (IR) filenames, for a reverb strip, an `Amp` chain's cabinet, or a `Reverb` chain. |
 
 ##### Strip Types
 | Type | Input Channels | Description |
@@ -200,12 +200,44 @@ Defines an auxiliary bus (always stereo).
 | Attribute | Type | Description |
 | :--- | :--- | :--- |
 | `name` | String | Name of the bus. |
-| `effectChain` | String | `Dynamics`, `Reverb`, `Delay`, or `None`. |
-| `resource` | String | (For Reverb buses) Comma-separated list of IR filenames. |
+| `effectChain` | String | `Dynamics`, `Amp`, `Reverb`, `Delay`, or `None`. See Effect Chains below. |
+| `resource` | String | Comma-separated list of IR filenames, for a `Reverb` bus or an `Amp` bus's cabinet. |
 | `img` | String | Icon resource name. |
 | `color` | String | Bus color. |
 
 **Note:** To prevent feedback loops, a Bus can only send audio to other Buses defined *sequentially after* it in the XML.
+
+#### Effect Chains
+
+Every strip and bus owns one effect chain, chosen by `effectChain=`. Each gets
+its own tab in the plugin, named after the strip.
+
+| `effectChain` | Contents | Order |
+| :--- | :--- | :--- |
+| `Dynamics` (default) | Transient, EQ, compressor, tube | Transient is always first; the other three are permutable |
+| `Amp` | EQ, compressor, tube, cabinet IR | The cabinet is always last; the other three are permutable |
+| `Reverb` | Convolution reverb, EQ, stereo delay | Fixed |
+| `Delay` | Stereo delay | — |
+| `None` | Nothing (buses only) | — |
+
+The permutable chains expose an Order selector at the top of their tab. Its
+options are the choice parameter's own strings, so what the box shows and what
+the audio does cannot drift apart — the fixed stage is named in every option
+(`Trans -> Comp -> Tube -> EQ`, `EQ -> Comp -> Tube -> Cab`).
+
+An `Amp` chain's cabinet offers an independent IR and gain per output channel.
+Its IR list comes from the strip's `resource=` attribute, the same way a
+`Reverb` chain's convolution reverb does — and when the strip names none, it
+falls back to the **factory cabinet set**: the ~700 kB of IRs that ship with the
+FxmeFX Cab plugin, embedded in every target by `cmake/FactoryCabinets.cmake`. So
+`effectChain="Amp"` is playable with nothing else added to the mapping, and
+naming your own cabinets in `resource=` replaces that set rather than adding to
+it.
+
+Cabinet IRs are looked up in `BinaryData` directly rather than through the
+resource provider, so your own cabinets have to be embedded — in `data/wav/`
+alongside the samples — and a folder-loaded kit sees the factory set instead of
+its own.
 
 ### 4. Sample Groups
 `<SampleGroup>` elements define shared properties for a set of sounds, such as envelopes and routing.

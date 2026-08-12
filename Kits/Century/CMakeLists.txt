@@ -38,6 +38,9 @@ list(LENGTH CT_PRESETS _ct_npreset)
 list(LENGTH CT_IMAGES  _ct_nimg)
 message(STATUS "Century: embedding ${_ct_nwav} samples, ${_ct_npreset} presets, ${_ct_nimg} images")
 
+# Shared cabinet IRs plus their manifest, for effectChain="Amp".
+fxme_factory_cabinets(CT_CABINETS)
+
 juce_add_binary_data(CenturyDrumsBinaryData SOURCES
     # Mapping: the one file that must exist, so it stays explicit.
     Data/mapping.xml
@@ -45,6 +48,7 @@ juce_add_binary_data(CenturyDrumsBinaryData SOURCES
     ${CT_PRESETS}
     ${CT_IMAGES}
     ${CT_WAVS}
+    ${CT_CABINETS}
 
     # Shared across kits, from outside this directory.
     ../../img/logo686.png
@@ -68,6 +72,8 @@ target_compile_options(CenturyDrumsBinaryData PRIVATE
 
 target_sources(CenturyDrums PRIVATE
     # Shared engine — relative to this kit directory
+    ../../Source/EffectChainAmp.cpp
+    ../../Source/EffectChainAmpComponent.cpp
     ../../Source/EffectChain.cpp
     ../../Source/EffectChainComponent.cpp
     ../../Source/EffectChainDelay.cpp
@@ -90,6 +96,8 @@ target_sources(CenturyDrums PRIVATE
     # FxmeFX effects submodule
     ../../FxmeFX/Source/Compressor/Compressor.cpp
     ../../FxmeFX/Source/Compressor/CompressorComponent.cpp
+    ../../FxmeFX/Source/Cab/Cab.cpp
+    ../../FxmeFX/Source/Cab/CabComponent.cpp
     ../../FxmeFX/Source/ConvolReverb/ConvolReverb.cpp
     ../../FxmeFX/Source/ConvolReverb/ConvolReverbComponent.cpp
     ../../FxmeFX/Source/Equalizer/Equalizer.cpp
@@ -107,6 +115,7 @@ target_sources(CenturyDrums PRIVATE
 target_include_directories(CenturyDrums PRIVATE
     ../../Source
     ../../FxmeFX/Source/Compressor
+    ../../FxmeFX/Source/Cab
     ../../FxmeFX/Source/ConvolReverb
     ../../FxmeFX/Source/Equalizer
     ../../FxmeFX/Source/StereoDelay

@@ -6,7 +6,7 @@
   <Master channels="2" img="logo686.png" color="0,220,255"/>
 
   <Mixer>
-    <Strip type="stereo" name="Bass" img="tb.jpg" color="255,100,100"/>
+    <Strip type="stereo" name="Bass" img="tb.jpg" effectChain="Amp" color="255,100,100"/>
     <Bus type="stereo" effectChain="Reverb" name="Reverb/Delay"
           img="Room.jpg"
           resource="Rectangular room small.wav,Rectangular room medium.wav,Rectangular room large.wav,Council Chamber.wav,Forest Short.wav,Forest Long.wav"

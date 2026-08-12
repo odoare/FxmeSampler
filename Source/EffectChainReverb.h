@@ -18,6 +18,8 @@ class EffectChainReverb : public EffectChain
 public:
     EffectChainReverb();
     
+    juce::String getTypeName() const override { return "Reverb"; }
+
     void prepare (double sampleRate, int samplesPerBlock, int numChannels) override;
     void process (juce::AudioBuffer<float>& buffer) override;
     void assignParameters (juce::AudioProcessorValueTreeState& apvts, const juce::String& prefix) override;

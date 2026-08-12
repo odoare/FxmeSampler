@@ -8,6 +8,7 @@
 
 #include "MixerComponent.h"
 #include "Theme.h"
+#include "EffectChainAmpComponent.h"
 #include "EffectChainReverbComponent.h"
 #include "EffectChainDelay.h"
 #include "EffectChainDelayComponent.h"
@@ -77,6 +78,10 @@ MixerComponent::MixerComponent (Mixer& m, Sampler& s, juce::AudioProcessorValueT
         if (auto* dynChain = dynamic_cast<EffectChainDynamics*>(chain))
         {
             tabs.addTab (name, juce::Colours::black, new EffectChainDynamicsComponent (*dynChain, apvts, name), true);
+        }
+        else if (auto* ampChain = dynamic_cast<EffectChainAmp*>(chain))
+        {
+            tabs.addTab (name, juce::Colours::black, new EffectChainAmpComponent (*ampChain, apvts, name), true);
         }
         else if (auto* reverbChain = dynamic_cast<EffectChainReverb*>(chain))
         {

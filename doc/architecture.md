@@ -153,8 +153,42 @@ output. Solo is global: if any strip is soloed, only soloed strips process.
 Strip types, selected by the type attribute in mapping.xml: ambisonic,
 ambisonicmono, stereo, ms, mono, stereoreverb, reverb, plus MasterStrip and
 BusStrip which are created implicitly. Each strip optionally owns an effect
-chain, selected by the effectChain attribute: Dynamics (EQ, compressor, tube,
-transient), Reverb (convolution reverb, EQ, delay), Delay, or None.
+chain, selected by the effectChain attribute: Dynamics (transient, EQ,
+compressor, tube), Amp (EQ, compressor, tube, cabinet IR), Reverb (convolution
+reverb, EQ, delay), Delay, or None.
+
+makeEffectChain in Mixer.cpp is the one place that maps that attribute to a
+class, for both Strip and Bus tags. Only a bus honours None — every other
+strip's prepare() creates a Dynamics chain when it finds none, which is also
+why the attribute has to be applied before prepare() runs.
+
+Dynamics and Amp both permute three of their stages under an _Order choice
+parameter and pin one stage: Dynamics puts the transient shaper first (the most
+musical place for it, ahead of everything else), Amp puts the cabinet last (a
+speaker is the end of an instrument's signal path; EQ after it would be a mix
+decision, not an amp one). Every option string names the pinned stage, and
+EffectChainComponent.h's populateFromChoiceParameter fills the order combo from
+those strings rather than from a second hand-written list — ComboBoxAttachment
+maps by index and never reads the item text, so two lists silently disagreeing
+is exactly the bug that produced an order box missing its "Trans ->" prefix.
+
+Both IR-consuming chains take their impulse list from the strip's resource=
+attribute, set during loadFromXml *before* addParameters runs, because the
+number of IRs sets the range of the IR-choice parameters. Those lookups go
+through BinaryData inside the FxmeFX submodule rather than through the resource
+provider, so a folder-loaded kit sees the host binary's IRs, not its own.
+
+An amp chain whose strip names no IRs falls back to the factory cabinet set.
+cmake/FactoryCabinets.cmake embeds the FxmeFX Cab IR folder (~700 kB) into every
+target and generates a cabinets.txt manifest from the same glob;
+factoryCabinetImpulses() reads that manifest at runtime and keeps the entries
+that really are embedded. The manifest exists because a kit's BinaryData is
+mostly drum samples, so the Cab plugin's own trick of listing every embedded wav
+does not transfer. Mangling those names is also why ResourceProvider::
+makeIdentifier has to match JUCE's rule exactly: half the cabinet files have
+dashes in them, and JUCE *drops* characters like that rather than replacing
+them, so "Marshall1960A-G12Ms-SM57-Cap-0in.wav" is embedded as
+Marshall1960AG12MsSM57Cap0in_wav.
 
 The effect components themselves come from FxmeFX, so the mixer strips get the
 same EQ, compressor, tube and convolution reverb that ship as standalone

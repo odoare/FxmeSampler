@@ -6,14 +6,14 @@
     FxmeSamplerDev — a standalone host for kits that have not been compiled.
 
     Point it at a folder holding a mapping.xml (plus its wav/, img/ and
-    presets/ directories, in any arrangement — only file names matter) and it
+    presets/ directories, in any arrangement, only file names matter) and it
     builds a complete FxmeSamplerAudioProcessor around that folder: the same
     engine, the same editor, the same parameters as a shipping kit.
 
-    Why this is an application and not a plugin
-    -------------------------------------------
+    This can't be a plugin
+    ----------------------
     A mapping decides how many parameters exist, and a host reads the parameter
-    list the moment the constructor returns — so the kit has to be chosen
+    list the moment the constructor returns so the kit has to be chosen
     before the processor is built. In a plugin that is impossible: the DAW
     builds the processor. Here the choice happens first and reloading simply
     throws the processor away and constructs a new one, which is also why no
@@ -28,6 +28,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "ResourceProvider.h"
+#include "EffectChainAmp.h"
+#include "EffectChainReverb.h"
 #include <iostream>
 
 namespace
@@ -356,6 +358,75 @@ static int checkKitFolder (const juce::File& folder)
 
     std::cout << "Groups      : " << processor.getSampler().getSampleGroups().size() << std::endl;
     std::cout << "Strips      : " << processor.getMixer().getStrips().size() << std::endl;
+
+    // Naming an impulse response is not the same as loading one: Cab and
+    // ConvolReverb look their names up in BinaryData themselves, so an IR that
+    // is only in the kit folder, or misspelled, gives a populated chooser and
+    // no convolution at all — silently. Both load on their first process()
+    // call, before they check whether they are switched on, so one silent block
+    // per chain is enough to find out which.
+    processor.prepareToPlay (44100.0, 512);
+
+    juce::AudioBuffer<float> silence (2, 512);
+
+    auto touch = [&silence] (EffectChain* chain)
+    {
+        if (chain != nullptr)
+        {
+            silence.clear();
+            chain->process (silence);   // deliberately direct: no mute, solo or
+        }                               // routing between us and the answer
+    };
+
+    for (const auto& strip : processor.getMixer().getStrips())
+        touch (strip->getEffectChain());
+
+    juce::StringArray irProblems;
+
+    // What each strip's effectChain= actually resolved to, how many IRs reached
+    // the chain that consumes them, and whether those IRs loaded.
+    auto describeStrip = [&irProblems] (const juce::String& name, EffectChain* chain)
+    {
+        std::cout << "  " << name.paddedRight (' ', 14)
+                  << (chain != nullptr ? chain->getTypeName() : juce::String ("(none)"));
+
+        auto reportIRs = [&] (const juce::String& what, int listed, std::vector<int> loaded)
+        {
+            std::cout << "  " << listed << " " << what;
+
+            juce::StringArray lengths;
+            bool anyEmpty = false;
+
+            for (auto samples : loaded)
+            {
+                lengths.add (samples > 0 ? juce::String (samples) + " smp" : juce::String ("EMPTY"));
+                anyEmpty = anyEmpty || samples <= 0;
+            }
+
+            std::cout << "  [" << lengths.joinIntoString (" / ") << "]";
+
+            if (listed > 0 && anyEmpty)
+                irProblems.add (name + ": " + juce::String (listed) + " " + what
+                                    + " named, but not embedded in this binary");
+        };
+
+        if (auto* amp = dynamic_cast<EffectChainAmp*> (chain))
+            reportIRs ("cab IRs", amp->getCab().getImpulseNames().size(),
+                       { amp->getCab().getIR (0).getNumSamples(),
+                         amp->getCab().getIR (1).getNumSamples() });
+        else if (auto* reverb = dynamic_cast<EffectChainReverb*> (chain))
+            reportIRs ("IRs", reverb->getReverb().getImpulseNames().size(),
+                       { reverb->getReverb().getModifiedIR().getNumSamples() });
+
+        std::cout << std::endl;
+    };
+
+    for (const auto& strip : processor.getMixer().getStrips())
+        describeStrip (strip->getName(), strip->getEffectChain());
+
+    describeStrip (processor.getMixer().getMasterStrip().getName(),
+                   processor.getMixer().getMasterStrip().getEffectChain());
+
     std::cout << "Parameters  : " << processor.getParameters().size() << std::endl;
     std::cout << "Channels    : " << processor.getSampler().getNumOutputChannels() << std::endl;
 
@@ -365,7 +436,11 @@ static int checkKitFolder (const juce::File& folder)
     for (const auto& miss : resources.getMisses())
         std::cout << "MISSING     : " << miss << std::endl;
 
-    const bool clean = resources.getMisses().isEmpty() && resources.getWarnings().isEmpty();
+    for (const auto& problem : irProblems)
+        std::cout << "IR          : " << problem << std::endl;
+
+    const bool clean = resources.getMisses().isEmpty() && resources.getWarnings().isEmpty()
+                           && irProblems.isEmpty();
     std::cout << (clean ? "OK" : "FAILED") << std::endl;
 
     return clean ? 0 : 1;

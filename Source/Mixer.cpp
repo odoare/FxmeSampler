@@ -7,9 +7,24 @@
 */
 
 #include "Mixer.h"
+#include "EffectChainAmp.h"
 #include "EffectChainDelay.h"
 #include "EffectChainDynamics.h"
 #include "EffectChainReverb.h"
+
+//==============================================================================
+// The one place that knows the effectChain= vocabulary. Returns nullptr for
+// "None" and for anything unrecognised — a bus takes that as no chain at all,
+// a strip falls back to the Dynamics chain its prepare() creates.
+static std::unique_ptr<EffectChain> makeEffectChain (const juce::String& type)
+{
+    if (type.equalsIgnoreCase ("Dynamics")) return std::make_unique<EffectChainDynamics>();
+    if (type.equalsIgnoreCase ("Amp"))      return std::make_unique<EffectChainAmp>();
+    if (type.equalsIgnoreCase ("Reverb"))   return std::make_unique<EffectChainReverb>();
+    if (type.equalsIgnoreCase ("Delay"))    return std::make_unique<EffectChainDelay>();
+
+    return nullptr;
+}
 
 //==============================================================================
 // Every img= attribute in a mapping goes through here. Returns a null Image
@@ -122,32 +137,24 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize,
         {
             // Bus is always stereo for now
             auto bus = std::make_unique<BusStrip> (name);
-            
-            juce::String effectChainType = child->getStringAttribute ("effectChain", "Dynamics");
-            if (effectChainType.equalsIgnoreCase ("Dynamics"))
-            {
-                bus->setEffectChain (std::make_unique<EffectChainDynamics>());
-            }
-            else if (effectChainType.equalsIgnoreCase ("Reverb"))
-            {
-                bus->setEffectChain (std::make_unique<EffectChainReverb>());
-            }
-            else if (effectChainType.equalsIgnoreCase ("Delay"))
-            {
-                bus->setEffectChain (std::make_unique<EffectChainDelay>());
-            }
-            // else if "None", effectChain remains nullptr
-            
+
+            // A bus with effectChain="None" (or a typo) keeps a null chain:
+            // BusStrip::prepare is the one prepare() that does not invent a
+            // default, so the bus really is a plain sum.
+            bus->setEffectChain (makeEffectChain (child->getStringAttribute ("effectChain", "Dynamics")));
+
             newStrip = std::move (bus);
         }
 
         if (newStrip != nullptr)
         {
-            if (chainType.equalsIgnoreCase ("dynamics"))
-            {
-                // Default, already handled by constructor/prepare logic if we want, 
-                // but we can explicitly set it here if we add a setter.
-            }
+            // A strip's chain comes from the same attribute. Setting it here,
+            // before prepare(), is what makes it stick: every strip's prepare()
+            // creates a Dynamics chain only if it finds none.
+            if (child->hasTagName ("Strip"))
+                if (auto chain = makeEffectChain (chainType))
+                    newStrip->setEffectChain (std::move (chain));
+
             juce::String imgName = child->getStringAttribute ("img");
             juce::String irName = child->getStringAttribute ("resource");
             juce::String colorStr = child->getStringAttribute ("color");
@@ -199,14 +206,34 @@ void Mixer::loadFromXml (const void* xmlData, int xmlSize,
                     {
                         rs->setImpulseList (namesList, resList);
                     }
-                    else if (auto* bs = dynamic_cast<BusStrip*>(newStrip.get()))
+                    // Whoever in this strip consumes impulse responses gets the
+                    // list: the reverb chain's convolution reverb, or the amp
+                    // chain's cabinet. It has to happen before addParameters,
+                    // because the count sets the range of the IR-choice
+                    // parameters.
+                    else if (auto* chain = dynamic_cast<EffectChainReverb*>(newStrip->getEffectChain()))
                     {
-                        if (auto* chain = dynamic_cast<EffectChainReverb*>(bs->getEffectChain()))
-                        {
-                            chain->getReverb().setImpulseList (namesList, resList);
-                        }
+                        chain->getReverb().setImpulseList (namesList, resList);
+                    }
+                    else if (auto* chain = dynamic_cast<EffectChainAmp*>(newStrip->getEffectChain()))
+                    {
+                        chain->getCab().setImpulseList (namesList, resList);
                     }
                 }
+
+                // An amp chain whose strip named no IRs gets the factory
+                // cabinets, so effectChain="Amp" is playable on its own. Still
+                // before addParameters, which needs the final count.
+                if (auto* ampChain = dynamic_cast<EffectChainAmp*> (newStrip->getEffectChain()))
+                {
+                    if (ampChain->getCab().getImpulseNames().isEmpty())
+                    {
+                        juce::StringArray cabNames, cabResources;
+                        factoryCabinetImpulses (cabNames, cabResources);
+                        ampChain->getCab().setImpulseList (cabNames, cabResources);
+                    }
+                }
+
                 strips.push_back (std::move (newStrip));
         }
     }

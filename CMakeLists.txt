@@ -34,6 +34,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/FxmeFX/lib/FxmeTools/cmake/FxmeTools.cmake)
 # dedicated BinaryData namespace keeps it from colliding with each kit's own).
 include(${CMAKE_CURRENT_SOURCE_DIR}/FxmeFX/Source/Common/CommonAssets.cmake)
 
+# Defines fxme_factory_cabinets(), which every target calls to embed the shared
+# cabinet IR set that effectChain="Amp" falls back to.
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/FactoryCabinets.cmake)
+
 # ── Kit plugins ────────────────────────────────────────────────────────────
 # Build the shipping kits by default. To build a single kit:
 #   cmake -B build -DKIT=BlackWidow

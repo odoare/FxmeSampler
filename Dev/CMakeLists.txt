@@ -46,9 +46,13 @@ foreach(_ir IN LISTS DEV_IRS)
     endif()
 endforeach()
 
+# The shared cabinet IRs and their manifest, exactly as a kit embeds them.
+fxme_factory_cabinets(DEV_CABINETS)
+
 juce_add_binary_data(FxmeSamplerDevBinaryData SOURCES
     ${DEV_IMAGES}
     ${DEV_IRS}
+    ${DEV_CABINETS}
     ../FxmeFX/Source/Tube/img/tube2.png
     ../FxmeFX/Source/Tube/img/tube2_bw.png
 )
@@ -64,6 +68,8 @@ target_sources(FxmeSamplerDev PRIVATE
     Main.cpp
     # Shared engine — the same files a kit compiles.
     ../Source/EffectChain.cpp
+    ../Source/EffectChainAmp.cpp
+    ../Source/EffectChainAmpComponent.cpp
     ../Source/EffectChainComponent.cpp
     ../Source/EffectChainDelay.cpp
     ../Source/EffectChainDelayComponent.cpp
@@ -83,6 +89,8 @@ target_sources(FxmeSamplerDev PRIVATE
     ../Source/SampleGroupComponent.cpp
     ../Source/WelcomeTabComponent.cpp
     # FxmeFX effects submodule
+    ../FxmeFX/Source/Cab/Cab.cpp
+    ../FxmeFX/Source/Cab/CabComponent.cpp
     ../FxmeFX/Source/Compressor/Compressor.cpp
     ../FxmeFX/Source/Compressor/CompressorComponent.cpp
     ../FxmeFX/Source/ConvolReverb/ConvolReverb.cpp
@@ -99,6 +107,7 @@ target_sources(FxmeSamplerDev PRIVATE
 
 target_include_directories(FxmeSamplerDev PRIVATE
     ../Source
+    ../FxmeFX/Source/Cab
     ../FxmeFX/Source/Compressor
     ../FxmeFX/Source/ConvolReverb
     ../FxmeFX/Source/Equalizer

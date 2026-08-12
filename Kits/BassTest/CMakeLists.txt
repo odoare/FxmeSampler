@@ -44,6 +44,9 @@ list(LENGTH BT_PRESETS _bt_npreset)
 list(LENGTH BT_IMAGES  _bt_nimg)
 message(STATUS "BassTest: embedding ${_bt_nwav} samples, ${_bt_npreset} presets, ${_bt_nimg} images")
 
+# Shared cabinet IRs plus their manifest, for effectChain="Amp".
+fxme_factory_cabinets(BT_CABINETS)
+
 juce_add_binary_data(BassTestBinaryData SOURCES
     # Mapping: the one file that must exist, so it stays explicit.
     data/mapping.xml
@@ -51,6 +54,7 @@ juce_add_binary_data(BassTestBinaryData SOURCES
     ${BT_PRESETS}
     ${BT_IMAGES}
     ${BT_WAVS}
+    ${BT_CABINETS}
 
     # Shared across kits, from outside this directory.
     ../../img/logo686.png
@@ -74,6 +78,8 @@ target_compile_options(BassTestBinaryData PRIVATE
 
 target_sources(BassTest PRIVATE
     # Shared engine — relative to this kit directory
+    ../../Source/EffectChainAmp.cpp
+    ../../Source/EffectChainAmpComponent.cpp
     ../../Source/EffectChain.cpp
     ../../Source/EffectChainComponent.cpp
     ../../Source/EffectChainDelay.cpp
@@ -96,6 +102,8 @@ target_sources(BassTest PRIVATE
     # FxmeFX effects submodule
     ../../FxmeFX/Source/Compressor/Compressor.cpp
     ../../FxmeFX/Source/Compressor/CompressorComponent.cpp
+    ../../FxmeFX/Source/Cab/Cab.cpp
+    ../../FxmeFX/Source/Cab/CabComponent.cpp
     ../../FxmeFX/Source/ConvolReverb/ConvolReverb.cpp
     ../../FxmeFX/Source/ConvolReverb/ConvolReverbComponent.cpp
     ../../FxmeFX/Source/Equalizer/Equalizer.cpp
@@ -113,6 +121,7 @@ target_sources(BassTest PRIVATE
 target_include_directories(BassTest PRIVATE
     ../../Source
     ../../FxmeFX/Source/Compressor
+    ../../FxmeFX/Source/Cab
     ../../FxmeFX/Source/ConvolReverb
     ../../FxmeFX/Source/Equalizer
     ../../FxmeFX/Source/StereoDelay

@@ -38,6 +38,9 @@ list(LENGTH BW_PRESETS _bw_npreset)
 list(LENGTH BW_IMAGES  _bw_nimg)
 message(STATUS "BlackWidow: embedding ${_bw_nwav} samples, ${_bw_npreset} presets, ${_bw_nimg} images")
 
+# Shared cabinet IRs plus their manifest, for effectChain="Amp".
+fxme_factory_cabinets(BW_CABINETS)
+
 juce_add_binary_data(BlackWidowDrumsBinaryData SOURCES
     # Mapping: the one file that must exist, so it stays explicit.
     data/mapping.xml
@@ -45,6 +48,7 @@ juce_add_binary_data(BlackWidowDrumsBinaryData SOURCES
     ${BW_PRESETS}
     ${BW_IMAGES}
     ${BW_WAVS}
+    ${BW_CABINETS}
 
     # Shared across kits, from outside this directory.
     ../../img/logo686.png
@@ -68,6 +72,8 @@ target_compile_options(BlackWidowDrumsBinaryData PRIVATE
 
 target_sources(BlackWidowDrums PRIVATE
     # Shared engine — relative to this kit directory
+    ../../Source/EffectChainAmp.cpp
+    ../../Source/EffectChainAmpComponent.cpp
     ../../Source/EffectChain.cpp
     ../../Source/EffectChainComponent.cpp
     ../../Source/EffectChainDelay.cpp
@@ -90,6 +96,8 @@ target_sources(BlackWidowDrums PRIVATE
     # FxmeFX effects submodule
     ../../FxmeFX/Source/Compressor/Compressor.cpp
     ../../FxmeFX/Source/Compressor/CompressorComponent.cpp
+    ../../FxmeFX/Source/Cab/Cab.cpp
+    ../../FxmeFX/Source/Cab/CabComponent.cpp
     ../../FxmeFX/Source/ConvolReverb/ConvolReverb.cpp
     ../../FxmeFX/Source/ConvolReverb/ConvolReverbComponent.cpp
     ../../FxmeFX/Source/Equalizer/Equalizer.cpp
@@ -107,6 +115,7 @@ target_sources(BlackWidowDrums PRIVATE
 target_include_directories(BlackWidowDrums PRIVATE
     ../../Source
     ../../FxmeFX/Source/Compressor
+    ../../FxmeFX/Source/Cab
     ../../FxmeFX/Source/ConvolReverb
     ../../FxmeFX/Source/Equalizer
     ../../FxmeFX/Source/StereoDelay

@@ -18,12 +18,7 @@ EffectChainDynamicsComponent::EffectChainDynamicsComponent (EffectChainDynamics&
       transComp (c.getTransient(), apvts, prefix)
 {
     addAndMakeVisible (orderBox);
-    orderBox.addItem ("EQ -> Comp -> Tube", 1);
-    orderBox.addItem ("EQ -> Tube -> Comp", 2);
-    orderBox.addItem ("Comp -> EQ -> Tube", 3);
-    orderBox.addItem ("Comp -> Tube -> EQ", 4);
-    orderBox.addItem ("Tube -> EQ -> Comp", 5);
-    orderBox.addItem ("Tube -> Comp -> EQ", 6);
+    populateFromChoiceParameter (orderBox, apvts, prefix + "_Order");
     orderAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, prefix + "_Order", orderBox);
 
     addAndMakeVisible (eqComp);
