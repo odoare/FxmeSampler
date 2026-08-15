@@ -20,7 +20,7 @@ SampleGroupComponent::SampleGroupComponent (SampleGroup& g, juce::AudioProcessor
     addAndMakeVisible (nameLabel);
     nameLabel.setText (group.getName(), juce::NotificationType::dontSendNotification);
     nameLabel.setJustificationType (juce::Justification::centred);
-    nameLabel.setFont (juce::Font (16.0f, juce::Font::bold));
+    nameLabel.setFont (juce::Font (juce::FontOptions (16.0f, juce::Font::bold)));
 
     addAndMakeVisible (oneShotButton);
     oneShotButton.setButtonText ("One Shot");
@@ -42,7 +42,7 @@ SampleGroupComponent::SampleGroupComponent (SampleGroup& g, juce::AudioProcessor
     addAndMakeVisible (releaseModeLabel);
     releaseModeLabel.setText ("Release Mode", juce::NotificationType::dontSendNotification);
     releaseModeLabel.setJustificationType (juce::Justification::centred);
-    releaseModeLabel.setFont (12.0f);
+    releaseModeLabel.setFont (juce::Font (juce::FontOptions (12.0f)));
 
     addAndMakeVisible (releaseModeBox);
     // Item ids are 1-based; the order must match the choice parameter.
@@ -168,7 +168,7 @@ void SampleGroupComponent::setupSlider (juce::Slider& slider, juce::Label& label
     addAndMakeVisible (label);
     label.setText (text, juce::NotificationType::dontSendNotification);
     label.setJustificationType (juce::Justification::centred);
-    label.setFont (12.0f);
+    label.setFont (juce::Font (juce::FontOptions (12.0f)));
 
     addAndMakeVisible (slider);
     slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
